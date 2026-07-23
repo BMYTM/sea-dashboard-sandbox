@@ -530,23 +530,31 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
 }
 
 /* ── Activity engine ─────────────────────────────────────────────────── */
-.act-wrap{background:#fafbfd;border:1px solid #e9edf4;border-radius:12px;padding:12px 14px;margin-bottom:14px;}
+.act-wrap{background:#fafbfd;border:1px solid #e9edf4;border-radius:12px;padding:12px 14px;margin-bottom:14px;
+  container-type:inline-size;container-name:actwrap;overflow:hidden;}
 .act-wrap.act-pre{background:#faf9ff;border-color:#e2ddf6;}
 .act-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
 .act-hint{font-size:11px;color:#8a91a3;font-weight:600;margin:4px 0 10px;line-height:1.5;}
-.act-bar{flex:0 0 120px;height:6px;background:#e7eaf1;border-radius:99px;overflow:hidden;}
+.act-bar{flex:1 1 90px;max-width:150px;height:6px;background:#e7eaf1;border-radius:99px;overflow:hidden;}
 .act-bar-fill{height:100%;background:#2f43c9;border-radius:99px;transition:width .25s ease;}
-.act-row{display:grid;grid-template-columns:20px minmax(150px,1.6fr) 120px 130px minmax(110px,1fr);
-  gap:8px;align-items:center;padding:6px 0;border-top:1px solid #eef1f6;}
+.act-row{display:grid;grid-template-columns:18px 1fr;gap:6px 10px;align-items:start;
+  padding:8px 0;border-top:1px solid #eef1f6;min-width:0;}
+.act-controls{grid-column:2;display:grid;grid-template-columns:1fr 1fr;gap:6px;min-width:0;}
+.act-controls .act-note{grid-column:1 / -1;}
+@container actwrap (min-width:600px){
+  .act-row{grid-template-columns:18px minmax(130px,1fr) minmax(300px,400px);align-items:center;}
+  .act-controls{grid-column:3;grid-template-columns:110px 128px minmax(100px,1fr);}
+  .act-controls .act-note{grid-column:auto;}
+}
 .act-row:first-of-type{border-top:none;}
-.act-label{font-size:12px;font-weight:650;color:#28304a;line-height:1.4;}
+.act-label{font-size:12px;font-weight:650;color:#28304a;line-height:1.35;padding-top:2px;min-width:0;}
 .act-done .act-label{color:#9aa2b2;text-decoration:line-through;}
 .act-overdue{background:#fff7f8;margin:0 -6px;padding-left:6px;padding-right:6px;border-radius:6px;}
 .act-flag{display:inline-block;margin-left:6px;font-size:9px;font-weight:800;letter-spacing:.05em;
   color:#bf3147;background:#fce8ea;padding:1px 5px;border-radius:4px;vertical-align:middle;}
 .act-chk{width:15px;height:15px;cursor:pointer;accent-color:#2f43c9;}
 .act-owner,.act-due,.act-note{font-size:11.5px;padding:5px 7px;border:1px solid #dfe4ec;border-radius:7px;
-  background:#fff;color:#28304a;font-family:inherit;font-weight:600;width:100%;box-sizing:border-box;}
+  background:#fff;color:#28304a;font-family:inherit;font-weight:600;width:100%;min-width:0;max-width:100%;box-sizing:border-box;}
 .act-owner:focus,.act-due:focus,.act-note:focus{outline:none;border-color:#2f43c9;}
 .mtg-ready-card{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;
   border:1px solid #e9edf4;border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:.15s;}
@@ -572,8 +580,6 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
 .prep-tag-stage{background:#e8f0fe;color:#1f5bd0;}
 .prep-tag-meeting{background:#f2f0fb;color:#5b4bb5;}
 @media(max-width:820px){
-  .act-row{grid-template-columns:20px 1fr;gap:6px;}
-  .act-owner,.act-due,.act-note{grid-column:2;}
   .prep-head-row{display:none;}
   .prep-row{grid-template-columns:1fr;gap:4px;}
 }
@@ -1082,7 +1088,7 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
           <select class="field-select" id="mtgStatus" onchange="onMtg('status',this.value)"><option>Scheduled</option><option>Plan</option><option>Done</option></select>
         </div>
       </div>
-      <div class="mb14"><label class="field-label">Owner</label><input class="field-input" id="mtgOwner" placeholder="Rep name" oninput="onMtg('owner',this.value)"></div>
+      <div class="mb14"><label class="field-label">Owner</label><input class="field-input" id="mtgOwner" list="mtgOwnerList" placeholder="Rep name" autocomplete="off" oninput="onMtg('owner',this.value)"><datalist id="mtgOwnerList"></datalist></div>
       <div class="mb14"><label class="field-label">Related deal (optional)</label><select class="field-select" id="mtgDeal" onchange="onMtg('dealId',this.value)"><option value="">— none —</option></select></div>
       <div class="mb20"><label class="field-label">Purpose / notes</label><input class="field-input" id="mtgRemarks" placeholder="e.g. Deep dive demo" oninput="onMtg('remarks',this.value)"></div>
       <div id="mtgPrepHost"></div>
@@ -2250,9 +2256,11 @@ function actRowHtml(a, i, label, onToggle, onField){
   return `<div class="act-row${a.done?" act-done":""}${od?" act-overdue":""}">
     <input type="checkbox" class="act-chk" ${a.done?"checked":""} onchange="${onToggle}">
     <div class="act-label">${esc(label)}${od?'<span class="act-flag">OVERDUE</span>':''}</div>
-    <select class="act-owner" onchange="${onField}('owner',this.value)">${_ownerOpts(a.owner)}</select>
-    <input type="date" class="act-due" value="${a.due||''}" onchange="${onField}('due',this.value)">
-    <input type="text" class="act-note" placeholder="evidence / note" value="${esc(a.note||'')}" oninput="${onField}('note',this.value)">
+    <div class="act-controls">
+      <select class="act-owner" onchange="${onField}('owner',this.value)">${_ownerOpts(a.owner)}</select>
+      <input type="date" class="act-due" value="${a.due||''}" onchange="${onField}('due',this.value)">
+      <input type="text" class="act-note" placeholder="evidence / note" value="${esc(a.note||'')}" oninput="${onField}('note',this.value)">
+    </div>
   </div>`;
 }
 
@@ -3305,6 +3313,8 @@ document.getElementById("addDealBtn").onclick=openAdd;
 function openMtg(id){
   // prep block is rendered after the modal opens (see _injectMtgPrep)
   setTimeout(_injectMtgPrep, 0);
+  const _ol = document.getElementById("mtgOwnerList");
+  if(_ol) _ol.innerHTML = getUsers().map(u=>`<option value="${esc(u.name)}"></option>`).join("");
   const existing = id ? state.meetings.find(m=>m.id===id) : null;
   const dealSel = document.getElementById("mtgDeal");
   const sortedDeals = state.deals.slice().sort((a,b)=>a.name.localeCompare(b.name));
