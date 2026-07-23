@@ -583,6 +583,49 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
   .prep-head-row{display:none;}
   .prep-row{grid-template-columns:1fr;gap:4px;}
 }
+
+/* ── Account map ─────────────────────────────────────────────────────── */
+.amap-wrap{background:#fafbfd;border:1px solid #e9edf4;border-radius:12px;padding:12px 14px;margin-bottom:14px;
+  container-type:inline-size;container-name:amap;overflow:hidden;}
+.amap-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.amap-cov{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:#fff;border:1px solid #eef1f6;
+  border-radius:10px;padding:10px 14px;margin-bottom:12px;}
+.amap-cov-main{display:flex;align-items:center;gap:10px;}
+.amap-cov-num{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1;}
+.amap-cov-lbl{font-size:10.5px;font-weight:700;color:#7b8395;line-height:1.35;}
+.amap-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.amap-chip{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap;}
+.amap-ok{background:#e4f5ea;color:#147a45;}
+.amap-bad{background:#fce8ea;color:#bf3147;}
+.amap-hdr-row{display:none;}
+.amap-row{background:#fff;border:1px solid #eef1f6;border-radius:10px;padding:8px 10px;margin-bottom:7px;}
+.amap-cold{border-left:3px solid #df5468;}
+.amap-l1,.amap-l2,.amap-l3{display:grid;gap:6px;min-width:0;}
+.amap-l1{grid-template-columns:1fr 1fr 22px;margin-bottom:6px;}
+.amap-l1 .amap-role,.amap-l1 .amap-str{grid-column:span 1;}
+.amap-l2{grid-template-columns:1fr 1fr;margin-bottom:6px;}
+.amap-l2 input{grid-column:1 / -1;}
+.amap-l3{grid-template-columns:1fr 20px 1fr 20px;}
+.amap-in{font-size:11.5px;padding:5px 7px;border:1px solid #dfe4ec;border-radius:7px;background:#fff;
+  color:#28304a;font-family:inherit;font-weight:600;width:100%;min-width:0;max-width:100%;box-sizing:border-box;}
+.amap-in:focus{outline:none;border-color:#2f43c9;}
+.amap-del{background:transparent;border:none;color:#bf3147;cursor:pointer;font-size:16px;font-weight:700;padding:0;line-height:1;}
+.amap-ic{font-size:14px;text-decoration:none;align-self:center;text-align:center;}
+.amap-empty{font-size:11.5px;color:#8a91a3;font-weight:600;padding:14px 4px;line-height:1.5;}
+.amap-refs{margin-top:10px;padding-top:10px;border-top:1px dashed #e2e7ef;}
+.amap-refs-lbl{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#b0b8c8;margin-bottom:6px;}
+.amap-ref{display:inline-block;font-size:11px;font-weight:700;background:#eef1fb;color:#3b49b5;
+  padding:3px 9px;border-radius:6px;margin:0 6px 6px 0;}
+.amap-ref-none{background:#f5f6f9;color:#8a91a3;font-weight:600;}
+@container amap (min-width:660px){
+  .amap-hdr-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 10px 5px;
+    font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#b0b8c8;}
+  .amap-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start;}
+  .amap-l1{grid-template-columns:1.3fr 1.3fr 1fr .8fr 22px;margin-bottom:0;}
+  .amap-l2{grid-template-columns:1fr 1fr;margin-bottom:0;}
+  .amap-l2 input{grid-column:1 / -1;}
+  .amap-l3{grid-column:1 / -1;grid-template-columns:1fr 20px 1fr 20px 1fr;}
+}
 </style>
 </head>
 <body>
@@ -634,6 +677,7 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
     <button class="nav-tab" id="tabPipeline" onclick="setView('pipeline')">Pipeline</button>
     <button class="nav-tab" id="tabMeetings" onclick="setView('meetings')">Client Meetings</button>
     <button class="nav-tab" id="tabPrep" onclick="setView('prep')">Prep &amp; Activities</button>
+    <button class="nav-tab" id="tabAmap" onclick="setView('amap')">Account Map</button>
     <button class="nav-tab" id="tabActivity" onclick="setView('activity')">Activity Log</button>
     <button class="nav-tab" id="tabAssistant" onclick="setView('assistant')">Assistant</button>
     <button class="nav-tab" id="tabBizReview" onclick="setView('bizreview')">Business Review</button>
@@ -862,6 +906,26 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
         <div>Activity</div><div>Owner</div><div>Due</div><div>Type</div>
       </div>
       <div id="prepList"></div>
+    </div>
+  </div>
+
+  <div id="viewAmap" style="display:none;animation:seaIn 0.4s ease;">
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Account Map — access &amp; coverage</div>
+          <div class="card-sub">Who we know inside each account, and who on our side can open the door. Sorted by weakest coverage first.</div>
+        </div>
+      </div>
+      <div id="amapKpis" class="prep-kpi-grid"></div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="prep-head-row"><div>Account</div><div>Buyer access</div><div>Coverage</div><div>Threads</div></div>
+      <div id="amapList"></div>
+    </div>
+    <div class="card">
+      <div class="prep-sec-h">Stakeholders with no warm path — find a connector</div>
+      <div id="amapGaps"></div>
     </div>
   </div>
 
@@ -2035,6 +2099,14 @@ function calcHonoScore(d){
   // Overdue activities hurt
   const odCount = getStageActs(d, d.stage).filter(isActOverdue).length;
   score -= odCount*4;
+  // Account map: warm access to the economic buyer is the strongest single signal
+  const _cov = pathCoverage(d);
+  if(_cov.mapped===0) score -= 10;
+  else {
+    if(_cov.ebWarm) score += 8; else if(_cov.hasEB) score += 3;
+    if(_cov.hasChampion) score += 4;
+    score += Math.round(_cov.pct/100*5);
+  }
   // Engagement freshness (up to 15 pts)
   const days = getDaysSinceEngagement(d);
   if(days!==null){
@@ -2366,6 +2438,187 @@ function _injectMtgPrep(){
   host.innerHTML = m ? renderMtgPrepBlock(m) : "";
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ACCOUNT MAP  — who we know, and who internally can open the door
+// ══════════════════════════════════════════════════════════════════════════════
+const COMMITTEE_ROLES = ["Unknown","Economic Buyer","Champion","IT / Security","End User","Procurement","Blocker"];
+const STRENGTHS = ["None","Cold","Building","Strong"];
+const PATH_TYPES = [
+  {key:"none",     label:"No path — cold",        warm:false},
+  {key:"internal", label:"Internal 1st-degree",   warm:true},
+  {key:"partner",  label:"Partner intro",         warm:true},
+  {key:"client",   label:"Client referral",       warm:true},
+  {key:"alumni",   label:"Ex-colleague / alumni", warm:true},
+  {key:"event",    label:"Event / roundtable",    warm:true}
+];
+function pathDef(k){ return PATH_TYPES.find(p=>p.key===k) || PATH_TYPES[0]; }
+
+function normContact(c){
+  return {id:c.id, name:c.name||"", title:c.title||"", email:c.email||"", phone:c.phone||"",
+          role:c.role||"Unknown", theirWin:c.theirWin||"", strength:c.strength||"None",
+          pathType:c.pathType||"none", pathOwner:c.pathOwner||"", pathNote:c.pathNote||""};
+}
+function getContacts(d){ return (d.contacts||[]).map(normContact); }
+
+function pathCoverage(d){
+  const cs = getContacts(d);
+  const warm = cs.filter(c=>pathDef(c.pathType).warm);
+  const gaps = cs.filter(c=>!pathDef(c.pathType).warm);
+  const threads = cs.filter(c=>c.strength==="Strong"||c.strength==="Building");
+  return {
+    mapped: cs.length,
+    warm: warm.length,
+    gaps,
+    threads: threads.length,
+    hasEB: cs.some(c=>c.role==="Economic Buyer"),
+    hasChampion: cs.some(c=>c.role==="Champion"),
+    ebWarm: cs.some(c=>c.role==="Economic Buyer" && pathDef(c.pathType).warm),
+    pct: cs.length ? Math.round(warm.length/cs.length*100) : 0
+  };
+}
+
+// Reference matching — proven accounts we can put in front of this one
+function suggestReferences(d){
+  const pool = state.deals.filter(x=>x.id!==d.id && (x.stage==="won"||x.stage==="commercial"));
+  const sameCountry = pool.filter(x=>x.country===d.country);
+  const band = x => { const e=x.emp||0; const t=d.emp||0; return t&&e ? Math.abs(Math.log((e||1)/(t||1)))<0.7 : false; };
+  const scored = pool.map(x=>({d:x, s:(x.country===d.country?2:0)+(band(x)?1:0)+(x.stage==="won"?1:0)}));
+  scored.sort((a,b)=>b.s-a.s);
+  return {best: scored.filter(x=>x.s>0).slice(0,3).map(x=>x.d), anySameCountry: sameCountry.length};
+}
+
+// Every stakeholder we cannot reach warm, across the portfolio
+function allPathGaps(){
+  const out=[];
+  state.deals.forEach(d=>{
+    if(d.stage==="won"||d.stage==="lost") return;
+    getContacts(d).forEach(c=>{
+      if(pathDef(c.pathType).warm) return;
+      if(!c.name && !c.title) return;
+      out.push({deal:d, contact:c, priority:(c.role==="Economic Buyer"?3:(c.role==="Champion"?2:1))});
+    });
+  });
+  out.sort((a,b)=> b.priority-a.priority || String(a.deal.name).localeCompare(String(b.deal.name)));
+  return out;
+}
+
+function _sel(opts, cur, onchange, cls){
+  return `<select class="${cls}" onchange="${onchange}">` +
+    opts.map(o=>{const v=typeof o==="string"?o:o.key, l=typeof o==="string"?o:o.label;
+      return `<option value="${v}"${v===cur?" selected":""}>${esc(l)}</option>`;}).join("") + `</select>`;
+}
+function _userSel(cur, onchange, cls){
+  return `<select class="${cls}" onchange="${onchange}"><option value="">— who helps? —</option>` +
+    getUsers().map(u=>`<option value="${u.id}"${u.id===cur?" selected":""}>${esc(u.name)}</option>`).join("") + `</select>`;
+}
+
+function renderAccountMap(d){
+  const cs = getContacts(d);
+  const cov = pathCoverage(d);
+  const refs = suggestReferences(d);
+  const U = f => `updateContact('${d.id}','__CID__','${f}',this.value)`;
+
+  const rows = cs.length ? cs.map(c=>{
+    const warm = pathDef(c.pathType).warm;
+    const u = f => U(f).replace('__CID__', c.id);
+    return `<div class="amap-row${warm?'':' amap-cold'}">
+      <div class="amap-l1">
+        <input type="text" class="amap-in" placeholder="Full name" value="${esc(c.name)}" oninput="${u('name')}">
+        <input type="text" class="amap-in" placeholder="Title" value="${esc(c.title)}" oninput="${u('title')}">
+        ${_sel(COMMITTEE_ROLES, c.role, u('role'), 'amap-in amap-role')}
+        ${_sel(STRENGTHS, c.strength, u('strength'), 'amap-in amap-str')}
+        <button class="amap-del" onclick="removeContact('${d.id}','${c.id}')" title="Remove">×</button>
+      </div>
+      <div class="amap-l2">
+        ${_sel(PATH_TYPES, c.pathType, u('pathType'), 'amap-in amap-path')}
+        ${_userSel(c.pathOwner, u('pathOwner'), 'amap-in amap-owner')}
+        <input type="text" class="amap-in" placeholder="Their win / how we get to them" value="${esc(c.pathNote)}" oninput="${u('pathNote')}">
+      </div>
+      <div class="amap-l3">
+        <input type="email" class="amap-in" placeholder="Email" value="${esc(c.email)}" oninput="${u('email')}">
+        <a class="amap-ic" href="mailto:${esc(c.email)}" style="opacity:${c.email?1:.2};pointer-events:${c.email?'auto':'none'}">✉️</a>
+        <input type="tel" class="amap-in" placeholder="Phone" value="${esc(c.phone)}" oninput="${u('phone')}">
+        <a class="amap-ic" href="https://wa.me/${(c.phone||'').replace(/[^0-9]/g,'')}" target="_blank" style="opacity:${c.phone?1:.2};pointer-events:${c.phone?'auto':'none'}">💬</a>
+      </div>
+    </div>`;
+  }).join("") : `<div class="amap-empty">No one mapped yet. Add the buying committee — economic buyer, champion, IT, end user, procurement — then record how we reach each of them.</div>`;
+
+  const tone = cov.pct===100?"#1f9d5b":(cov.pct>=50?"#e0930f":"#bf3147");
+  const chip = (ok,label) => `<span class="amap-chip ${ok?'amap-ok':'amap-bad'}">${ok?'✓':'✗'} ${label}</span>`;
+
+  const refHtml = refs.best.length
+    ? refs.best.map(r=>`<span class="amap-ref">${esc(r.name)} · ${esc(r.country)}</span>`).join("")
+    : `<span class="amap-ref amap-ref-none">No won account yet in ${esc(d.country)} to reference — use a regional proof point.</span>`;
+
+  return `<div class="amap-wrap">
+    <div class="amap-head">
+      <label class="field-label" style="margin:0;">🗺️ Account map — who we know &amp; who opens the door</label>
+      <button class="btn-cancel" style="padding:5px 10px;font-size:11.5px;" onclick="addContact('${d.id}')">+ Add stakeholder</button>
+    </div>
+
+    <div class="amap-cov">
+      <div class="amap-cov-main">
+        <div class="amap-cov-num" style="color:${tone};">${cov.pct}%</div>
+        <div class="amap-cov-lbl">warm-path coverage<br><span style="color:#9aa2b2;">${cov.warm} of ${cov.mapped} reachable</span></div>
+      </div>
+      <div class="amap-chips">
+        ${chip(cov.hasEB,'Economic buyer mapped')}
+        ${chip(cov.ebWarm,'Warm path to buyer')}
+        ${chip(cov.hasChampion,'Champion identified')}
+        ${chip(cov.threads>=3,'3+ live relationships')}
+      </div>
+    </div>
+
+    <div class="amap-hdr-row"><span>Stakeholder</span><span>Path in &amp; who helps</span></div>
+    ${rows}
+
+    <div class="amap-refs">
+      <div class="amap-refs-lbl">🏆 Reference candidates</div>
+      <div>${refHtml}</div>
+    </div>
+  </div>`;
+}
+
+// ── Account Map portfolio view ──────────────────────────────────────────────
+function renderAccountMapView(){
+  const active = state.deals.filter(d=>d.stage!=="won"&&d.stage!=="lost");
+  const gaps = allPathGaps();
+  const unmapped = active.filter(d=>getContacts(d).length===0).length;
+  const noEB = active.filter(d=>!pathCoverage(d).hasEB).length;
+  const noWarmEB = active.filter(d=>{const c=pathCoverage(d); return c.hasEB && !c.ebWarm;}).length;
+
+  const kpi=(v,l,c)=>`<div class="prep-kpi"><div class="prep-kpi-v" style="color:${c};">${v}</div><div class="prep-kpi-l">${l}</div></div>`;
+  document.getElementById("amapKpis").innerHTML =
+    kpi(unmapped+" / "+active.length,"Accounts with nobody mapped","#bf3147")+
+    kpi(noEB,"No economic buyer identified","#e0930f")+
+    kpi(noWarmEB,"Buyer mapped but no warm path","#8254d8")+
+    kpi(gaps.length,"Stakeholders we can't reach","#2f43c9");
+
+  const cov = active.map(d=>({d, c:pathCoverage(d)}))
+                    .sort((a,b)=>a.c.pct-b.c.pct || b.d.amount-a.d.amount);
+  document.getElementById("amapList").innerHTML = cov.map(({d,c})=>{
+    const tone = c.pct===100?"#1f9d5b":(c.pct>=50?"#e0930f":"#bf3147");
+    return `<div class="prep-row" onclick="viewDealFromModal('${d.id}')">
+      <div><div class="prep-act">${esc(d.name)}</div>
+        <div class="prep-ctx">${esc(d.country)} · ${stageOf(d.stage).label} · ${c.mapped} mapped</div></div>
+      <div class="prep-owner">${c.hasEB?(c.ebWarm?'<span style="color:#147a45;font-weight:700;">warm</span>':'<span style="color:#bf3147;font-weight:700;">cold</span>'):'<span style="color:#bf3147;font-weight:700;">not mapped</span>'}</div>
+      <div class="prep-due" style="color:${tone};font-weight:800;">${c.pct}%</div>
+      <div><span class="prep-tag ${c.threads>=3?'prep-tag-stage':'prep-tag-meeting'}">${c.threads} THREADS</span></div>
+    </div>`;
+  }).join("") || '<div style="padding:36px;text-align:center;color:#9aa2b2;font-weight:600;">No active accounts.</div>';
+
+  document.getElementById("amapGaps").innerHTML = gaps.length ? gaps.map(g=>`
+    <div class="prep-row" onclick="viewDealFromModal('${g.deal.id}')">
+      <div><div class="prep-act">${esc(g.contact.name||'(unnamed)')} — ${esc(g.contact.title||g.contact.role)}</div>
+        <div class="prep-ctx">${esc(g.deal.name)} · ${esc(g.contact.role)}</div></div>
+      <div class="prep-owner">${g.contact.pathOwner?esc((getUserById(g.contact.pathOwner)||{}).name||''):'<span style="color:#bf3147;font-weight:700;">no one assigned</span>'}</div>
+      <div class="prep-due" style="color:#bf3147;font-weight:800;">cold</div>
+      <div><span class="prep-tag prep-tag-meeting">FIND A PATH</span></div>
+    </div>`).join("")
+    : '<div style="padding:36px;text-align:center;color:#9aa2b2;font-weight:600;">Every mapped stakeholder has a warm path.</div>';
+}
+
 function renderPrepView(){
   const acts=allOpenActivities();
   const overdue=acts.filter(a=>a.overdue);
@@ -2404,6 +2657,7 @@ function render(){
   if(state.view==="pipeline") renderPipeline();
   else if(state.view==="meetings") renderMeetings();
   else if(state.view==="prep") renderPrepView();
+  else if(state.view==="amap") renderAccountMapView();
   else if(state.view==="assistant") renderChat();
   else if(state.view==="bizreview") renderBizReview();
   else renderActivityLog();
@@ -2422,7 +2676,7 @@ function renderHeader(){
 
 function renderTabNav(){
   const v = state.view;
-  const tabs = {pipeline:"tabPipeline", meetings:"tabMeetings", prep:"tabPrep", activity:"tabActivity", assistant:"tabAssistant", bizreview:"tabBizReview"};
+  const tabs = {pipeline:"tabPipeline", meetings:"tabMeetings", prep:"tabPrep", amap:"tabAmap", activity:"tabActivity", assistant:"tabAssistant", bizreview:"tabBizReview"};
   Object.entries(tabs).forEach(([key,id])=>{
     const el = document.getElementById(id);
     const active = v===key;
@@ -2432,6 +2686,7 @@ function renderTabNav(){
   document.getElementById("viewPipeline").style.display = v==="pipeline" ? "" : "none";
   document.getElementById("viewMeetings").style.display = v==="meetings" ? "" : "none";
   document.getElementById("viewPrep").style.display = v==="prep" ? "" : "none";
+  document.getElementById("viewAmap").style.display = v==="amap" ? "" : "none";
   document.getElementById("viewActivity").style.display = v==="activity" ? "" : "none";
   document.getElementById("viewAssistant").style.display = v==="assistant" ? "" : "none";
   document.getElementById("viewBizReview").style.display = v==="bizreview" ? "" : "none";
@@ -2968,14 +3223,7 @@ function renderDealRow(d){
 
         <hr class="crm-divider">
 
-        <div style="margin-bottom:14px;">
-          <div class="crm-section-head">
-            <label class="field-label" style="margin:0;">👤 Key contacts (${contacts.length})</label>
-            <button class="btn-cancel" style="padding:5px 10px;font-size:11.5px;" onclick="addContact('${d.id}')">+ Add contact</button>
-          </div>
-          ${contactColHdr}
-          ${contactsHtml}
-        </div>
+        ${renderAccountMap(d)}
 
         <hr class="crm-divider">
 
@@ -3480,7 +3728,8 @@ function addContact(dealId){
   const d = state.deals.find(x=>x.id===dealId);
   if(!d) return;
   if(!d.contacts) d.contacts=[];
-  d.contacts.push({id:"c"+Date.now(), name:"", title:"", email:"", phone:""});
+  d.contacts.push({id:"c"+Date.now(), name:"", title:"", email:"", phone:"",
+                   role:"Unknown", strength:"None", pathType:"none", pathOwner:"", pathNote:""});
   d.lastUpdated = TODAY.toISOString().slice(0,10);
   persist();
   renderPipeline();
