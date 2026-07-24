@@ -662,6 +662,38 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
   .ceo-risk-row{grid-template-columns:1fr;}
   .ceo-risk-tags{justify-content:flex-start;}
 }
+
+/* ── Sign-in ─────────────────────────────────────────────────────────── */
+.si-box{background:#fff;border-radius:20px;padding:34px 34px 26px;width:100%;max-width:440px;
+  box-shadow:0 30px 80px rgba(0,0,0,.4);max-height:92vh;overflow-y:auto;}
+.si-logo{width:46px;height:46px;border-radius:13px;background:#2f43c9;color:#fff;display:flex;
+  align-items:center;justify-content:center;font-weight:800;font-size:23px;margin-bottom:16px;
+  box-shadow:0 6px 16px rgba(47,67,201,.34);}
+.si-title{font-size:19px;font-weight:800;letter-spacing:-.02em;color:#10172a;}
+.si-sub{font-size:12px;font-weight:600;color:#7b8395;margin-top:2px;}
+.si-sub b{color:#5b4bb5;}
+.si-q{font-size:12.5px;font-weight:800;color:#28304a;margin:22px 0 10px;}
+.si-list{display:flex;flex-direction:column;gap:7px;}
+.si-card{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fafbfd;
+  border:1px solid #e9edf4;border-radius:12px;padding:11px 13px;cursor:pointer;transition:.14s;font-family:inherit;}
+.si-card:hover{border-color:#2f43c9;background:#f4f6fd;transform:translateX(2px);}
+.si-av{width:34px;height:34px;border-radius:50%;color:#fff;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;}
+.si-meta{display:flex;flex-direction:column;min-width:0;}
+.si-name{font-size:13.5px;font-weight:700;color:#1c2438;}
+.si-role{font-size:11px;font-weight:600;color:#8a91a3;margin-top:1px;}
+.si-divider{display:flex;align-items:center;gap:10px;margin:18px 0 12px;}
+.si-divider::before,.si-divider::after{content:"";flex:1;height:1px;background:#e9edf4;}
+.si-divider span{font-size:10.5px;font-weight:700;color:#b0b8c8;text-transform:uppercase;letter-spacing:.05em;}
+.si-add{display:grid;grid-template-columns:1fr 96px;gap:7px;}
+.si-in{font-size:12.5px;padding:9px 11px;border:1px solid #dfe4ec;border-radius:9px;background:#fff;
+  color:#28304a;font-family:inherit;font-weight:600;width:100%;box-sizing:border-box;}
+.si-in:focus{outline:none;border-color:#2f43c9;}
+.si-add-btn{grid-column:1 / -1;background:#2f43c9;color:#fff;border:none;border-radius:9px;padding:10px;
+  font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.14s;}
+.si-add-btn:hover{background:#2536a8;}
+.si-note{font-size:10.5px;line-height:1.55;color:#9aa2b2;font-weight:600;margin-top:18px;
+  padding-top:14px;border-top:1px solid #f0f2f7;}
 </style>
 </head>
 <body>
@@ -1700,8 +1732,19 @@ function renderUserPanel(){
     </div>`;
 }
 
+function _appendSignOut(){
+  const p = document.getElementById("userPanel");
+  if(!p || p.querySelector(".si-signout")) return;
+  const b = document.createElement("div");
+  b.className = "user-panel-row si-signout";
+  b.style.cssText = "border-top:1px solid #eef1f6;color:#bf3147;font-weight:700;";
+  b.textContent = "Sign out";
+  b.onclick = signOut;
+  p.appendChild(b);
+}
 function toggleUserPanel(e){
   e.stopPropagation();
+  setTimeout(_appendSignOut, 0);
   const p=document.getElementById("userPanel");
   if(!p) return;
   const isOpen=p.style.display!=="none";
@@ -1779,7 +1822,8 @@ function addTeamUser(){
   const id="u"+Date.now();
   state.users=[...users,{id,name,role,color}];
   if(nameEl) nameEl.value="";
-  localPersist();
+  persist();
+  logActivity("Team member added", name+" ("+role+")");
   renderTeamManagerBody();
   renderUserPanel();
   if(state.view==="pipeline") renderPipeline();
@@ -1787,14 +1831,14 @@ function addTeamUser(){
 function renameUser(uid,name){
   const n=(name||"").trim(); if(!n) return;
   state.users=getUsers().map(u=>u.id===uid?{...u,name:n}:u);
-  localPersist();
+  persist();
   renderUserPanel();
   if(state.currentUserId===uid){ state.userName=n; setAvatar(n); }
   if(state.view==="pipeline") renderPipeline();
 }
 function changeUserRole(uid,role){
   state.users=getUsers().map(u=>u.id===uid?{...u,role}:u);
-  localPersist();
+  persist();
   renderTeamManagerBody();
   renderUserPanel();
 }
@@ -1805,7 +1849,8 @@ function removeTeamUser(uid){
   const fallback=state.users[0].id;
   state.deals=state.deals.map(d=>d.owner===uid?{...d,owner:fallback}:d);
   if(state.currentUserId===uid) switchUser(fallback);
-  localPersist();
+  persist();
+  logActivity("Team member removed", (getUserById(uid)||{name:uid}).name+" — deals reassigned");
   renderTeamManagerBody();
   renderUserPanel();
   if(state.view==="pipeline") renderPipeline();
@@ -2716,6 +2761,75 @@ function ceoMetrics(){
           notReady, upcomingN: upcoming.length, byCountry, risky,
           thisQn: thisQ.length, thisQval: thisQ.reduce((s,d)=>s+(d.amount||0),0),
           cover: ARR_TARGET ? arr/ARR_TARGET : 0};
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SIGN-IN  — identifies who is using the dashboard so work is attributed.
+//
+//  IMPORTANT, PLEASE READ:
+//  This is identification, NOT authentication. This file is a public static page;
+//  anyone who can open the URL can pick any profile, and anyone can read this
+//  source. It exists so actions are attributed to a person and "my deals" works —
+//  it does not protect the data. Real authentication needs a server-side identity
+//  provider (Microsoft Entra ID / M365 SSO would be the natural fit here, since
+//  the team is already on SharePoint and Power Automate).
+// ══════════════════════════════════════════════════════════════════════════════
+const SIGNED_IN_KEY = LS_KEY + "-signed-in";
+
+function isSignedIn(){
+  try { return localStorage.getItem(SIGNED_IN_KEY) === "1" && !!getUserById(state.currentUserId); }
+  catch(e){ return false; }
+}
+
+function renderSignIn(){
+  const host = document.getElementById("signInList");
+  if(!host){ document.addEventListener("DOMContentLoaded", renderSignIn, {once:true}); return; }
+  const users = getUsers();
+  const cards = users.map(u=>{
+    const init = userInitials(u);
+    const roleLbl = u.role==="sdr" ? "SDR" : (u.role==="manager" ? "Manager" : "Sales");
+    return `<button class="si-card" onclick="doSignIn('${u.id}')">
+      <span class="si-av" style="background:${u.color||'#2f43c9'};">${esc(init)}</span>
+      <span class="si-meta">
+        <span class="si-name">${esc(u.name)}</span>
+        <span class="si-role">${roleLbl}</span>
+      </span>
+    </button>`;
+  }).join("");
+  host.innerHTML = cards;
+  const ov = document.getElementById("signInOverlay");
+  if(ov) ov.style.display = "flex";
+}
+
+function doSignIn(uid){
+  const u = getUserById(uid);
+  if(!u) return;
+  switchUser(uid);
+  try { localStorage.setItem(SIGNED_IN_KEY, "1"); } catch(e){}
+  document.getElementById("signInOverlay").style.display = "none";
+  logActivity("Signed in", u.name);
+  render();
+}
+
+function signOut(){
+  try { localStorage.removeItem(SIGNED_IN_KEY); } catch(e){}
+  const p = document.getElementById("userPanel"); if(p) p.style.display="none";
+  renderSignIn();
+}
+
+function signInAddSelf(){
+  const el = document.getElementById("siNewName");
+  const name = (el ? el.value : "").trim();
+  if(!name){ if(el){ el.style.borderColor="#bf3147"; setTimeout(()=>el.style.borderColor="",1200);} return; }
+  const role = document.getElementById("siNewRole")?.value || "sales";
+  const users = getUsers();
+  const color = USER_PALETTE[users.length % USER_PALETTE.length];
+  const id = "u" + Date.now();
+  state.users = [...users, {id, name, role, color}];
+  persist();
+  logActivity("Team member added", name+" ("+role+") — via sign-in");
+  doSignIn(id);
 }
 
 function renderCeoReview(){
@@ -5294,11 +5408,35 @@ async function _doExportBizPPT(){
     setBanner("info", "<b>SANDBOX COPY</b> — disconnected from the live team data. Everything you do here stays in this browser and cannot affect production. Merge later once the new activity model is agreed.");
     setSyncPill("offline", "Sandbox · local only");
   }
-  if (!state.userName) setTimeout(promptUserName, 400);
+  if (!isSignedIn()) {
+    if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", renderSignIn, {once:true});
+    else renderSignIn();
+  }
 })();
 </script>
 
 <!-- ── Team Manager Modal ─────────────────────────────────────────────────── -->
+<div id="signInOverlay" style="display:none;position:fixed;inset:0;background:linear-gradient(155deg,#0f1b3d,#233a86);z-index:900;align-items:center;justify-content:center;padding:20px;">
+  <div class="si-box">
+    <div class="si-logo">H</div>
+    <div class="si-title">HONO · SEA Sales</div>
+    <div class="si-sub">Weekly Pipeline Review — <b>Sandbox</b></div>
+    <div class="si-q">Who's signing in?</div>
+    <div id="signInList" class="si-list"></div>
+    <div class="si-divider"><span>or add yourself</span></div>
+    <div class="si-add">
+      <input id="siNewName" class="si-in" type="text" placeholder="Your name" autocomplete="off">
+      <select id="siNewRole" class="si-in si-role-sel">
+        <option value="sales">Sales</option>
+        <option value="sdr">SDR</option>
+        <option value="manager">Manager</option>
+      </select>
+      <button class="si-add-btn" onclick="signInAddSelf()">Add &amp; continue</button>
+    </div>
+    <div class="si-note">This identifies you so work is attributed to the right person. It is not a security control — this is a public sandbox page and anyone with the link can select any profile.</div>
+  </div>
+</div>
+
 <div id="teamManagerOverlay" onclick="if(event.target===this)closeTeamManager()" style="display:none;position:fixed;inset:0;background:rgba(16,23,42,0.55);z-index:500;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:16px;padding:0;width:480px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
     <!-- header -->
