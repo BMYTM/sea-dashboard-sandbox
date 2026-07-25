@@ -694,6 +694,29 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
 .si-add-btn:hover{background:#2536a8;}
 .si-note{font-size:10.5px;line-height:1.55;color:#9aa2b2;font-weight:600;margin-top:18px;
   padding-top:14px;border-top:1px solid #f0f2f7;}
+
+.amap-actions{display:flex;gap:8px;flex-shrink:0;}
+.amap-btn{background:#2f43c9;color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:12px;
+  font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:.14s;}
+.amap-btn:hover{background:#2536a8;}
+.amap-btn-ghost{background:#fff;color:#2f43c9;border:1px solid #cdd5ee;}
+.amap-btn-ghost:hover{background:#f4f6fd;}
+@media(max-width:620px){.amap-actions{width:100%;margin-top:8px;}.amap-btn{flex:1;}}
+
+/* ── Row click affordance + quick actions ────────────────────────────── */
+.row-chev{display:inline-block;color:#b0b8c8;font-size:11px;margin-right:6px;transition:transform .15s ease;}
+.tbl-row:hover{background:#f5f8fd;}
+.tbl-row:hover .row-chev{color:#2f43c9;}
+.tbl-row:hover .deal-name{color:#2f43c9;}
+.tbl-row-open{background:#f4f6fd;}
+.tbl-row-open .row-chev{color:#2f43c9;}
+.row-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.qa-btn{font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;border:1px solid #dfe4ec;
+  background:#fff;color:#3a4256;cursor:pointer;font-family:inherit;transition:.13s;white-space:nowrap;}
+.qa-btn:hover{border-color:#2f43c9;color:#2f43c9;background:#f4f6fd;}
+.qa-win:hover{border-color:#1f9d5b;color:#147a45;background:#e9f7ef;}
+.qa-lost:hover{border-color:#bf3147;color:#bf3147;background:#fdecee;}
+.qa-hold:hover{border-color:#c08a1a;color:#a96b06;background:#fbf4e4;}
 </style>
 </head>
 <body>
@@ -1011,10 +1034,14 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
 
   <div id="viewAmap" style="display:none;animation:seaIn 0.4s ease;">
     <div class="card" style="margin-bottom:14px;">
-      <div class="card-head">
+      <div class="card-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
         <div>
           <div class="card-title">Account Map — access &amp; coverage</div>
           <div class="card-sub">Who we know inside each account, and who on our side can open the door. Sorted by weakest coverage first.</div>
+        </div>
+        <div class="amap-actions">
+          <button class="amap-btn" onclick="exportAccountMaps()" title="Download all account maps as a backup file">⭳ Export backup</button>
+          <button class="amap-btn amap-btn-ghost" onclick="importAccountMaps()" title="Restore account maps from a backup file">⭱ Import</button>
         </div>
       </div>
       <div id="amapKpis" class="prep-kpi-grid"></div>
@@ -2907,6 +2934,58 @@ function renderCeoReview(){
   document.getElementById("ceoRead").innerHTML = lines.map(l=>`<li>${l}</li>`).join("");
 }
 
+
+// ── Account map export / import ─────────────────────────────────────────────
+function exportAccountMaps(){
+  const withC = state.deals.filter(d=>(d.contacts||[]).length>0);
+  const dump = {
+    exportedAt: new Date().toISOString(),
+    source: "sea-dashboard-sandbox",
+    dealsWithContacts: withC.length,
+    totalContacts: withC.reduce((s,d)=>s+d.contacts.length,0),
+    accounts: withC.map(d=>({id:d.id, name:d.name, country:d.country, stage:d.stage, contacts:d.contacts}))
+  };
+  const blob = new Blob([JSON.stringify(dump,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "account_maps_" + realTodayStr() + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  logActivity("Account maps exported", dump.totalContacts+" contacts / "+dump.dealsWithContacts+" accounts");
+}
+
+function importAccountMaps(){
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "application/json,.json";
+  inp.onchange = () => {
+    const f = inp.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const data = JSON.parse(r.result);
+        const accts = data.accounts || [];
+        let matched=0, added=0, skipped=0;
+        accts.forEach(a=>{
+          let d = state.deals.find(x=>x.id===a.id) || state.deals.find(x=>x.name===a.name);
+          if(!d){ skipped++; return; }
+          if((d.contacts||[]).length>0){
+            if(!confirm(`"${d.name}" already has ${d.contacts.length} contact(s). Overwrite with ${a.contacts.length} from the file?`)){ skipped++; return; }
+          }
+          d.contacts = a.contacts.map(normContact);
+          matched++; added += a.contacts.length;
+        });
+        localPersist();
+        render();
+        alert(`Import complete.\n${matched} account(s) updated, ${added} contact(s) loaded.` + (skipped?`\n${skipped} skipped (no matching deal or cancelled).`:""));
+        logActivity("Account maps imported", added+" contacts into "+matched+" accounts");
+      } catch(e){ alert("Could not read that file — is it a valid account-map export?\n\n"+e.message); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
 function renderAccountMapView(){
   const active = state.deals.filter(d=>d.stage!=="won"&&d.stage!=="lost");
   const gaps = allPathGaps();
@@ -3253,7 +3332,11 @@ function renderPipeline(){
   }
 
   const q = state.search.trim().toLowerCase();
+  const HIDDEN_STAGES = ["won","lost","onhold"];
   let rows = deals.filter(d=>{
+    // Closed / lost / on-hold are hidden from the working pipeline unless
+    // the user explicitly filters TO one of those stages.
+    if(HIDDEN_STAGES.includes(d.stage) && !state.stageFilter.includes(d.stage)) return false;
     if(state.country!=="all" && d.country!==state.country) return false;
     if(state.needsOnly && d.updated) return false;
     if(q && !(d.name.toLowerCase().includes(q)||(d.remarks||"").toLowerCase().includes(q)||d.country.toLowerCase().includes(q))) return false;
@@ -3563,18 +3646,22 @@ function renderDealRow(d){
           ${linkedMtgsHtml}
         </div>
 
-        <div style="display:flex;align-items:center;gap:10px;">
+        <div class="row-actions">
           <button class="btn-mark" style="background:${markBg};color:${markFg};border:1px solid ${markBd};" onclick="markUpdated('${d.id}')">${markLabel}</button>
-          <button class="btn-close-row" onclick="toggleExpand('${d.id}')">Close</button>
-          <button class="btn-delete" onclick="deleteDeal('${d.id}')">Delete deal</button>
+          <button class="qa-btn" onclick="event.stopPropagation();gotoAccountMap('${d.id}')" title="Open this account's map">🗺️ Account map</button>
+          ${!["won","lost"].includes(d.stage)?`<button class="qa-btn qa-win" onclick="event.stopPropagation();quickSetStage('${d.id}','won')" title="Mark this deal won">✓ Won</button>
+          <button class="qa-btn qa-lost" onclick="event.stopPropagation();quickSetStage('${d.id}','lost')" title="Mark this deal lost">✕ Lost</button>
+          <button class="qa-btn qa-hold" onclick="event.stopPropagation();quickSetStage('${d.id}','onhold')" title="Put this deal on hold">⏸ Hold</button>`:`<button class="qa-btn" onclick="event.stopPropagation();quickSetStage('${d.id}','demo')" title="Reopen this deal">↺ Reopen</button>`}
+          <button class="btn-close-row" onclick="event.stopPropagation();toggleExpand('${d.id}')">Close</button>
+          <button class="btn-delete" onclick="event.stopPropagation();deleteDeal('${d.id}')">Delete</button>
         </div>
       </div>
     </div>`;
   }
   return `<div class="tbl-row-wrap">
-    <div class="tbl-row" style="grid-template-columns:${GRID};border-left-color:${accent};" onclick="toggleExpand('${d.id}')">
+    <div class="tbl-row${expanded?" tbl-row-open":""}" style="grid-template-columns:${GRID};border-left-color:${accent};" onclick="toggleExpand('${d.id}')" title="Click to ${expanded?'collapse':'open'} this deal">
       <div style="min-width:0;padding-right:12px;">
-        <div class="deal-name">${esc(d.name)}</div>
+        <div class="deal-name"><span class="row-chev" style="transform:rotate(${expanded?90:0}deg);">▸</span>${esc(d.name)}</div>
         <div class="deal-sub">${esc(d.source)} · ${d.emp!=null?d.emp.toLocaleString("en-US"):"—"} emp${followUpRowBadge}</div>
         ${riskRow}
       </div>
@@ -3807,6 +3894,22 @@ function setCountry(k){ state.country=k; renderPipeline(); }
 function toggleNeeds(){ state.needsOnly=!state.needsOnly; renderPipeline(); }
 function onSearch(v){ state.search=v; renderPipeline(); }
 function onSort(v){ state.sort=v; renderPipeline(); }
+function gotoAccountMap(id){
+  const d=state.deals.find(x=>x.id===id); if(!d) return;
+  state.expandedId=id;
+  setView("amap");
+  setTimeout(()=>{ if(typeof viewDealFromModal==="function") viewDealFromModal(id); }, 60);
+}
+function quickSetStage(id, stage){
+  const d=state.deals.find(x=>x.id===id); if(!d) return;
+  const from=stageOf(d.stage).label, to=stageOf(stage).label;
+  if(["won","lost"].includes(stage) && !confirm(`Mark "${d.name}" as ${to}?`)) return;
+  setField(id,"stage",stage);
+  logActivity("Stage changed", d.name+" · "+from+" → "+to);
+  // collapse and refresh; closed deals drop out of the working list
+  if(state.expandedId===id) state.expandedId=null;
+  renderPipeline();
+}
 function toggleExpand(id){
   state.expandedId = state.expandedId===id ? null : id;
   renderPipeline();
