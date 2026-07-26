@@ -758,6 +758,28 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
 .iq-noli{font-size:11px;color:#bf3147;font-weight:600;}
 .iq-copy{font-size:11.5px;font-weight:700;color:#3a4256;background:#fff;border:1px solid #dfe4ec;border-radius:7px;padding:5px 11px;cursor:pointer;font-family:inherit;}
 .iq-copy:hover{border-color:#0a66c2;color:#0a66c2;}
+
+/* sortable headers */
+.th-sort{cursor:pointer;display:flex;align-items:center;gap:2px;user-select:none;transition:color .12s;}
+.th-sort:hover{color:#2f43c9;}
+.th-arr{font-size:9px;color:#2f43c9;}
+/* quick-find */
+.qf-launch{background:#eef1fb;color:#2f43c9;border:1px solid #dbe1f5;border-radius:9px;padding:6px 12px;
+  font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-right:10px;display:inline-flex;align-items:center;gap:6px;transition:.13s;}
+.qf-launch:hover{background:#e2e7f9;}
+.qf-launch kbd{background:#fff;border:1px solid #cdd5ee;border-radius:4px;padding:0 5px;font-size:11px;font-family:inherit;color:#5a6274;}
+.qf-panel{background:#fff;border-radius:14px;width:100%;max-width:540px;box-shadow:0 24px 70px rgba(0,0,0,.38);overflow:hidden;}
+.qf-input{width:100%;border:none;padding:18px 20px;font-size:15px;font-family:inherit;color:#1c2438;box-sizing:border-box;outline:none;border-bottom:1px solid #eef1f6;}
+.qf-results{max-height:340px;overflow-y:auto;}
+.qf-row{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;border-bottom:1px solid #f4f6fa;}
+.qf-row.qf-on,.qf-row:hover{background:#f4f6fd;}
+.qf-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em;}
+.qf-deal{background:#e7ecfd;color:#2f43c9;}
+.qf-contact{background:#e9f7ef;color:#147a45;}
+.qf-label{font-size:13.5px;font-weight:700;color:#1c2438;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qf-sub{font-size:11.5px;color:#8a91a3;font-weight:600;margin-left:auto;white-space:nowrap;flex-shrink:0;}
+.qf-empty{padding:20px;text-align:center;color:#9aa2b2;font-size:13px;}
+.qf-hint{padding:9px 20px;font-size:11px;color:#aeb4c2;font-weight:600;background:#fafbfd;border-top:1px solid #eef1f6;}
 </style>
 </head>
 <body>
@@ -806,6 +828,7 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
     </div>
   </div>
   <div class="nav-tabs">
+    <button class="qf-launch" onclick="openQuickFind()" title="Quick find (press /)">🔍 Find <kbd>/</kbd></button>
     <button class="nav-tab" id="tabCeo" onclick="setView('ceo')">CEO Review</button>
     <button class="nav-tab" id="tabPipeline" onclick="setView('pipeline')">Pipeline</button>
     <button class="nav-tab" id="tabMeetings" onclick="setView('meetings')">Client Meetings</button>
@@ -976,7 +999,7 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
         <button id="clearFiltersBtn" onclick="clearAllFilters()" style="display:none;font-size:11.5px;font-weight:700;color:#bf3147;background:#fce8ea;border:1px solid #f0b8bf;padding:5px 12px;border-radius:7px;cursor:pointer;font-family:inherit;flex-shrink:0;">× Clear all</button>
       </div>
       <div class="tbl-head" style="grid-template-columns:minmax(200px,1.7fr) 110px 156px 96px 92px 124px minmax(180px,1.5fr) 96px;">
-        <div>Deal</div><div>Country</div><div>Stage</div><div style="text-align:right;">Amount</div><div>Close</div><div>Win %</div><div>Latest weekly remark</div><div style="text-align:center;">State</div>
+        <div class="th-sort" onclick="onSort('name')" title="Sort by name">Deal<span class="th-arr" data-k="name"></span></div><div>Country</div><div>Stage</div><div class="th-sort" style="text-align:right;justify-content:flex-end;" onclick="onSort('amount')" title="Sort by amount">Amount<span class="th-arr" data-k="amount"></span></div><div class="th-sort" onclick="onSort('close')" title="Sort by close date">Close<span class="th-arr" data-k="close"></span></div><div class="th-sort" onclick="onSort('prob')" title="Sort by win %">Win %<span class="th-arr" data-k="prob"></span></div><div>Latest weekly remark</div><div class="th-sort" style="text-align:center;justify-content:center;" onclick="onSort('updated')" title="Sort by update state">State<span class="th-arr" data-k="updated"></span></div>
       </div>
       <div id="needsAttentionStrip"></div>
       <div id="dealTableBody"></div>
@@ -1720,11 +1743,12 @@ let state = {
   deals: (saved && saved.deals) || SEED_DEALS.map((d, i) => ({...d, updated:d.upd, lastUpdated: d.upd ? "2026-06-11" : null, owner: d.owner||_defaultOwner(d,i)})),
   meetings: ensureMtgIds((saved && saved.meetings) || SEED_MEETINGS),
   view: "pipeline",
-  country: "all",
+  country: (saved && saved._prefs && saved._prefs.country) || "all",
   search: "",
   needsOnly: false,
-  sort: "amount",
-  stageFilter: [],
+  sort: (saved && saved._prefs && saved._prefs.sort) || "amount",
+  sortDir: (saved && saved._prefs && saved._prefs.sortDir) || "desc",
+  stageFilter: (saved && saved._prefs && saved._prefs.stageFilter) || [],
   mtgHistSort: "date",
   mtgSortDir: "desc",
   mtgWeek: "all",
@@ -1756,7 +1780,7 @@ let state = {
   bizDrafts: (saved && saved.bizDrafts) || {},
   users: (saved && saved.users) || DEFAULT_USERS,
   currentUserId: localStorage.getItem(LS_KEY+"-current-user") || "u1",
-  ownerFilter: "all",
+  ownerFilter: (saved && saved._prefs && saved._prefs.ownerFilter) || "all",
   sdrQueueMode: false,
   bizOwner: "all"
 };
@@ -1844,6 +1868,7 @@ function toggleOwnerFilter(uid){
 
 function setOwnerFilter(v){
   state.ownerFilter=v;
+  savePrefs();
   if(state.view==="pipeline") renderPipeline();
 }
 
@@ -3263,6 +3288,71 @@ function renderTabNav(){
   document.getElementById("viewBizReview").style.display = v==="bizreview" ? "" : "none";
 }
 
+
+// ── Quick-find: press "/" to jump to any deal or contact ────────────────────
+function openQuickFind(){
+  let box = document.getElementById("qfOverlay");
+  if(!box){ buildQuickFind(); box = document.getElementById("qfOverlay"); }
+  box.style.display = "flex";
+  const inp = document.getElementById("qfInput");
+  inp.value=""; document.getElementById("qfResults").innerHTML="";
+  setTimeout(()=>inp.focus(), 30);
+}
+function closeQuickFind(){ const b=document.getElementById("qfOverlay"); if(b) b.style.display="none"; }
+function buildQuickFind(){
+  const div = document.createElement("div");
+  div.id="qfOverlay";
+  div.style.cssText="display:none;position:fixed;inset:0;background:rgba(16,23,42,.5);z-index:950;align-items:flex-start;justify-content:center;padding-top:12vh;";
+  div.onclick=e=>{ if(e.target===div) closeQuickFind(); };
+  div.innerHTML=`<div class="qf-panel">
+    <input id="qfInput" class="qf-input" type="text" placeholder="Jump to a deal or contact…  (Esc to close)" autocomplete="off" oninput="runQuickFind(this.value)" onkeydown="qfKey(event)">
+    <div id="qfResults" class="qf-results"></div>
+    <div class="qf-hint">↑↓ to move · Enter to open · Esc to close</div>
+  </div>`;
+  document.body.appendChild(div);
+}
+function qfMatches(q){
+  q=q.trim().toLowerCase(); if(!q) return [];
+  const out=[];
+  state.deals.forEach(d=>{
+    if(d.name.toLowerCase().includes(q)) out.push({type:"deal", id:d.id, label:d.name, sub:countryOf(d.country).short+" · "+stageOf(d.stage).label});
+    (d.contacts||[]).forEach(c=>{
+      if((c.name||"").toLowerCase().includes(q) || (c.title||"").toLowerCase().includes(q))
+        out.push({type:"contact", id:d.id, label:c.name||c.title, sub:(c.title?c.title+" · ":"")+d.name});
+    });
+  });
+  return out.slice(0,8);
+}
+let _qfSel=0, _qfList=[];
+function runQuickFind(v){
+  _qfList = qfMatches(v); _qfSel=0;
+  const el=document.getElementById("qfResults");
+  if(!_qfList.length){ el.innerHTML = v.trim()? '<div class="qf-empty">No matches</div>':''; return; }
+  el.innerHTML = _qfList.map((r,i)=>`<div class="qf-row${i===0?' qf-on':''}" data-i="${i}" onclick="qfGo(${i})">
+    <span class="qf-badge qf-${r.type}">${r.type==="deal"?"Deal":"Contact"}</span>
+    <span class="qf-label">${esc(r.label)}</span><span class="qf-sub">${esc(r.sub)}</span></div>`).join("");
+}
+function qfKey(e){
+  if(e.key==="Escape"){ closeQuickFind(); return; }
+  if(e.key==="ArrowDown"){ e.preventDefault(); _qfSel=Math.min(_qfSel+1,_qfList.length-1); qfPaint(); }
+  if(e.key==="ArrowUp"){ e.preventDefault(); _qfSel=Math.max(_qfSel-1,0); qfPaint(); }
+  if(e.key==="Enter"){ e.preventDefault(); if(_qfList.length) qfGo(_qfSel); }
+}
+function qfPaint(){
+  document.querySelectorAll("#qfResults .qf-row").forEach((el,i)=>el.classList.toggle("qf-on",i===_qfSel));
+}
+function qfGo(i){
+  const r=_qfList[i]; if(!r) return;
+  closeQuickFind();
+  if(r.type==="contact"){ state.expandedId=r.id; setView("amap"); setTimeout(()=>{ if(typeof viewDealFromModal==="function") viewDealFromModal(r.id); },60); }
+  else { state.expandedId=r.id; setView("pipeline"); setTimeout(()=>{ const el=document.querySelector(`[onclick="toggleExpand('${r.id}')"]`); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); },80); }
+}
+document.addEventListener("keydown",e=>{
+  if(e.key==="/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable){
+    e.preventDefault(); openQuickFind();
+  }
+});
+
 function renderPipeline(){
   // ── Render team strip first ──────────────────────────────────────────────
   _renderTeamStrip();
@@ -3521,8 +3611,12 @@ function renderPipeline(){
     name:(a,b)=>a.name.localeCompare(b.name)
   };
   rows = rows.slice().sort(sortFns[state.sort]||sortFns.amount);
+  if(state.sortDir==="asc") rows.reverse();
   state._visibleDealRows = rows;
   document.getElementById("visibleCount").textContent = rows.length+" shown";
+  document.querySelectorAll(".th-arr").forEach(el=>{
+    el.textContent = (el.dataset.k===state.sort) ? (state.sortDir==="asc"?" ▲":" ▼") : "";
+  });
   document.getElementById("dealTableBody").innerHTML = rows.length===0
     ? '<div class="empty-state">No deals match these filters.</div>'
     : rows.map(d=>renderDealRow(d)).join("");
@@ -4054,10 +4148,24 @@ function renderMeetings(){
 
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
 function setView(v){ state.view=v; state.expandedId=null; render(); }
-function setCountry(k){ state.country=k; renderPipeline(); }
+function setCountry(k){ state.country=k; savePrefs(); renderPipeline(); }
 function toggleNeeds(){ state.needsOnly=!state.needsOnly; renderPipeline(); }
 function onSearch(v){ state.search=v; renderPipeline(); }
-function onSort(v){ state.sort=v; renderPipeline(); }
+function savePrefs(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    const obj = raw ? JSON.parse(raw) : {};
+    obj._prefs = { country:state.country, sort:state.sort, sortDir:state.sortDir,
+                   stageFilter:state.stageFilter, ownerFilter:state.ownerFilter };
+    localStorage.setItem(LS_KEY, JSON.stringify(obj));
+  } catch(e){}
+}
+function onSort(v){
+  // clicking the active column flips direction; a new column starts descending
+  if(state.sort===v){ state.sortDir = state.sortDir==="desc" ? "asc" : "desc"; }
+  else { state.sort=v; state.sortDir="desc"; }
+  savePrefs(); renderPipeline();
+}
 function gotoAccountMap(id){
   const d=state.deals.find(x=>x.id===id); if(!d) return;
   state.expandedId=id;
@@ -4261,11 +4369,11 @@ function quarterSort(key){
   const startY=qNum<=3?(fyFull-1):fyFull;
   return startY*100+startM;
 }
-function setStageFilter(arr){ state.stageFilter=arr; renderPipeline(); }
+function setStageFilter(arr){ state.stageFilter=arr; savePrefs(); renderPipeline(); }
 function toggleStageFilter(key){
   const i = state.stageFilter.indexOf(key);
   if(i>=0) state.stageFilter.splice(i,1); else state.stageFilter.push(key);
-  renderPipeline();
+  savePrefs(); renderPipeline();
 }
 function toggleStageFilterMenu(e){
   if(e) e.stopPropagation();
