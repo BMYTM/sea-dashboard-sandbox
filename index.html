@@ -1082,7 +1082,8 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
         </div>
         <div class="amap-actions">
           <button class="amap-btn amap-btn-invite" onclick="showInviteQueue()" title="This week's LinkedIn invites to send by hand">🔗 Invites to send</button>
-          <button class="amap-btn" onclick="exportAccountMaps()" title="Download all account maps as a backup file">⭳ Export backup</button>
+          <button class="amap-btn" onclick="exportAccountMaps(true)" title="Download only accounts changed since your last backup — small file, imports cleanly">⭳ Export changes</button>
+          <button class="amap-btn amap-btn-ghost" onclick="exportAccountMaps(false)" title="Download the full account-map backup">⭳ Full backup</button>
           <button class="amap-btn amap-btn-ghost" onclick="importAccountMaps()" title="Restore account maps from a backup file">⭱ Import</button>
         </div>
       </div>
@@ -3054,15 +3055,22 @@ function copyInviteNote(i){
 }
 
 
-function exportAccountMaps(){
-  const withC = state.deals.filter(d=>(d.contacts||[]).length>0);
+function exportAccountMaps(changedOnly){
+  let withC = state.deals.filter(d=>(d.contacts||[]).length>0);
+  const since = changedOnly ? (+localStorage.getItem(LS_KEY+"-amap-exported")||0) : 0;
+  if(changedOnly){
+    withC = withC.filter(d=> (d.amapTouched||0) > since );
+    if(!withC.length){ alert("Nothing new to export since your last backup."); return; }
+  }
   const dump = {
     exportedAt: new Date().toISOString(),
     source: "sea-dashboard-sandbox",
+    scope: changedOnly ? "changed-since-last-export" : "full-snapshot",
     dealsWithContacts: withC.length,
     totalContacts: withC.reduce((s,d)=>s+d.contacts.length,0),
     accounts: withC.map(d=>({id:d.id, name:d.name, country:d.country, stage:d.stage, contacts:d.contacts}))
   };
+  localStorage.setItem(LS_KEY+"-amap-exported", Date.now());
   const blob = new Blob([JSON.stringify(dump,null,2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -3083,20 +3091,58 @@ function importAccountMaps(){
       try {
         const data = JSON.parse(r.result);
         const accts = data.accounts || [];
-        let matched=0, added=0, skipped=0;
+        // Count how many incoming accounts collide with existing mapped ones
+        const collisions = accts.filter(a=>{
+          const d = state.deals.find(x=>x.id===a.id) || state.deals.find(x=>x.name===a.name);
+          return d && (d.contacts||[]).length>0;
+        }).length;
+
+        // Merge is the default and runs silently — it never destroys your edits,
+        // it only fills blank fields and adds new people. We ONLY ask a question
+        // if the file is flagged as a full-replace snapshot.
+        let mode = (data.importMode === "replace") ? "replace" : "merge";
+        if(mode === "replace" && collisions>0){
+          const ok = confirm(
+            `This file is a full snapshot and will REPLACE ${collisions} account(s) entirely, `+
+            `overwriting any edits you've made since.\n\nContinue with replace? (Cancel = merge instead, keeping your edits)`
+          );
+          mode = ok ? "replace" : "merge";
+        }
+
+        let matched=0, added=0, skipped=0, merged=0;
         accts.forEach(a=>{
           let d = state.deals.find(x=>x.id===a.id) || state.deals.find(x=>x.name===a.name);
           if(!d){ skipped++; return; }
-          if((d.contacts||[]).length>0){
-            if(!confirm(`"${d.name}" already has ${d.contacts.length} contact(s). Overwrite with ${a.contacts.length} from the file?`)){ skipped++; return; }
+          const existing = (d.contacts||[]).map(normContact);
+          const incoming = (a.contacts||[]).map(normContact);
+          if(existing.length===0 || mode==="replace"){
+            d.contacts = incoming;
+          } else {
+            // MERGE: match by name (case-insensitive); fill empty fields, add new people
+            const key = c => (c.name||"").trim().toLowerCase();
+            const byName = {}; existing.forEach(c=>{ if(key(c)) byName[key(c)]=c; });
+            incoming.forEach(inc=>{
+              const hit = key(inc) && byName[key(inc)];
+              if(hit){
+                // fill only blank fields on the existing contact; never clobber your edits
+                ["title","email","phone","role","strength","pathType","pathOwner","pathNote","linkedin","connectStatus","inviteNote","theirWin"].forEach(f=>{
+                  const cur = (hit[f]||"").toString().trim();
+                  const blankish = cur==="" || cur==="none" || cur==="None" || cur==="Unknown";
+                  if(blankish && inc[f] && inc[f]!=="none" && inc[f]!=="None") hit[f]=inc[f];
+                });
+              } else {
+                existing.push(inc); // new person not already mapped
+              }
+            });
+            d.contacts = existing;
+            merged++;
           }
-          d.contacts = a.contacts.map(normContact);
-          matched++; added += a.contacts.length;
+          matched++; added += incoming.length;
         });
         localPersist();
         render();
-        alert(`Import complete.\n${matched} account(s) updated, ${added} contact(s) loaded.` + (skipped?`\n${skipped} skipped (no matching deal or cancelled).`:""));
-        logActivity("Account maps imported", added+" contacts into "+matched+" accounts");
+        alert(`Import complete — ${mode==="replace"?"replaced":"merged"}.\n${matched} account(s) updated`+(merged?`, ${merged} merged (your edits kept)`:"")+`.`+(skipped?`\n${skipped} skipped (no matching deal).`:""));
+        logActivity("Account maps imported ("+mode+")", added+" contacts across "+matched+" accounts");
       } catch(e){ alert("Could not read that file — is it a valid account-map export?\n\n"+e.message); }
     };
     r.readAsText(f);
@@ -4273,7 +4319,12 @@ function downloadCSV(filename, rows){
   URL.revokeObjectURL(url);
 }
 // ── Contact CRM functions ──────────────────────────────────────────
+function touchAccount(dealId){
+  const d = state.deals.find(x=>x.id===dealId);
+  if(d){ d.amapTouched = Date.now(); }
+}
 function addContact(dealId){
+  touchAccount(dealId);
   const d = state.deals.find(x=>x.id===dealId);
   if(!d) return;
   if(!d.contacts) d.contacts=[];
@@ -4292,7 +4343,7 @@ function updateContact(dealId, cid, field, val){
   const d = state.deals.find(x=>x.id===dealId);
   if(!d||!d.contacts) return;
   const c = d.contacts.find(x=>x.id===cid);
-  if(c){ c[field]=val; d.lastUpdated=TODAY.toISOString().slice(0,10); persist(); }
+  if(c){ c[field]=val; d.lastUpdated=TODAY.toISOString().slice(0,10); d.amapTouched=Date.now(); persist(); }
 }
 function removeContact(dealId, cid){
   const d = state.deals.find(x=>x.id===dealId);
