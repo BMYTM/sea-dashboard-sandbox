@@ -717,6 +717,47 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
 .qa-win:hover{border-color:#1f9d5b;color:#147a45;background:#e9f7ef;}
 .qa-lost:hover{border-color:#bf3147;color:#bf3147;background:#fdecee;}
 .qa-hold:hover{border-color:#c08a1a;color:#a96b06;background:#fbf4e4;}
+
+/* ── Navigation affordances: show what's clickable ─────────────────────── */
+.ceo-ctry-row.ceo-clk{cursor:pointer;transition:background .12s;position:relative;}
+.ceo-ctry-row.ceo-clk:hover{background:#f4f6fd;}
+.ceo-ctry-row.ceo-clk::after{content:"\203A";position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#c3cadd;font-size:18px;font-weight:700;opacity:0;transition:opacity .12s;}
+.ceo-ctry-row.ceo-clk:hover::after{opacity:1;}
+.ceo-tile-clk{cursor:pointer;transition:transform .12s,box-shadow .12s;}
+.ceo-tile-clk:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(20,30,70,.10);}
+.ceo-risk-row{cursor:pointer;}
+.prep-row{cursor:pointer;transition:background .12s;position:relative;}
+.prep-row:hover{background:#f5f8fd;}
+.prep-row::after{content:"\203A";position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#c3cadd;font-size:20px;font-weight:700;opacity:0;transition:opacity .12s;pointer-events:none;}
+.prep-row:hover::after{opacity:1;}
+
+.amap-l4{display:grid;grid-template-columns:1fr 28px 150px;gap:6px;align-items:center;margin-top:6px;}
+.amap-li{font-size:12px;}
+.amap-li-ic{font-weight:800;font-style:italic;color:#0a66c2;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:12px;}
+.amap-cstat{font-size:11.5px;}
+.amap-btn-invite{background:#0a66c2;}
+.amap-btn-invite:hover{background:#08528f;}
+.iq-panel{background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.4);overflow:hidden;}
+.iq-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:20px 22px 16px;border-bottom:1px solid #eef1f6;}
+.iq-title-main{font-size:16px;font-weight:800;color:#10172a;letter-spacing:-.01em;}
+.iq-sub{font-size:11.5px;color:#7b8395;font-weight:600;margin-top:3px;}
+.iq-x{background:none;border:none;font-size:24px;color:#aeb4c2;cursor:pointer;line-height:1;padding:0;}
+.iq-body{overflow-y:auto;padding:16px 22px 22px;}
+.iq-empty{font-size:13px;line-height:1.6;color:#5a6274;text-align:center;padding:24px 8px;}
+.iq-row{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid #f1f3f8;}
+.iq-num{width:22px;height:22px;border-radius:50%;background:#0a66c2;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.iq-main{min-width:0;flex:1;}
+.iq-name{font-size:13.5px;font-weight:700;color:#1c2438;}
+.iq-title{font-weight:600;color:#8a91a3;font-size:12px;}
+.iq-deal{font-size:11.5px;color:#7b8395;font-weight:600;margin-top:1px;}
+.iq-flag{background:#e7f0fb;color:#0a66c2;font-weight:700;padding:1px 7px;border-radius:20px;font-size:10px;margin-left:4px;}
+.iq-note{font-size:12px;line-height:1.5;color:#3a4256;background:#f7f9fc;border:1px solid #eef1f6;border-radius:8px;padding:8px 10px;margin:7px 0;}
+.iq-acts{display:flex;align-items:center;gap:12px;}
+.iq-open{font-size:12px;font-weight:700;color:#0a66c2;text-decoration:none;}
+.iq-open:hover{text-decoration:underline;}
+.iq-noli{font-size:11px;color:#bf3147;font-weight:600;}
+.iq-copy{font-size:11.5px;font-weight:700;color:#3a4256;background:#fff;border:1px solid #dfe4ec;border-radius:7px;padding:5px 11px;cursor:pointer;font-family:inherit;}
+.iq-copy:hover{border-color:#0a66c2;color:#0a66c2;}
 </style>
 </head>
 <body>
@@ -1040,6 +1081,7 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
           <div class="card-sub">Who we know inside each account, and who on our side can open the door. Sorted by weakest coverage first.</div>
         </div>
         <div class="amap-actions">
+          <button class="amap-btn amap-btn-invite" onclick="showInviteQueue()" title="This week's LinkedIn invites to send by hand">🔗 Invites to send</button>
           <button class="amap-btn" onclick="exportAccountMaps()" title="Download all account maps as a backup file">⭳ Export backup</button>
           <button class="amap-btn amap-btn-ghost" onclick="importAccountMaps()" title="Restore account maps from a backup file">⭱ Import</button>
         </div>
@@ -2603,7 +2645,8 @@ function pathDef(k){ return PATH_TYPES.find(p=>p.key===k) || PATH_TYPES[0]; }
 function normContact(c){
   return {id:c.id, name:c.name||"", title:c.title||"", email:c.email||"", phone:c.phone||"",
           role:c.role||"Unknown", theirWin:c.theirWin||"", strength:c.strength||"None",
-          pathType:c.pathType||"none", pathOwner:c.pathOwner||"", pathNote:c.pathNote||""};
+          pathType:c.pathType||"none", pathOwner:c.pathOwner||"", pathNote:c.pathNote||"",
+          linkedin:c.linkedin||"", connectStatus:c.connectStatus||"none", inviteNote:c.inviteNote||""};
 }
 function getContacts(d){ return (d.contacts||[]).map(normContact); }
 
@@ -2659,6 +2702,15 @@ function _userSel(cur, onchange, cls){
     getUsers().map(u=>`<option value="${u.id}"${u.id===cur?" selected":""}>${esc(u.name)}</option>`).join("") + `</select>`;
 }
 
+const CONNECT_STATUS = [
+  ["none","○ Not connected"],
+  ["queued","◔ Invite queued"],
+  ["sent","◑ Invite sent"],
+  ["connected","● Connected"],
+  ["viaTeam","◈ 2nd° via teammate"]
+];
+function connectLabel(v){ const f=CONNECT_STATUS.find(s=>s[0]===v); return f?f[1]:CONNECT_STATUS[0][1]; }
+
 function renderAccountMap(d){
   const cs = getContacts(d);
   const cov = pathCoverage(d);
@@ -2686,6 +2738,11 @@ function renderAccountMap(d){
         <a class="amap-ic" href="mailto:${esc(c.email)}" style="opacity:${c.email?1:.2};pointer-events:${c.email?'auto':'none'}">✉️</a>
         <input type="tel" class="amap-in" placeholder="Phone" value="${esc(c.phone)}" oninput="${u('phone')}">
         <a class="amap-ic" href="https://wa.me/${(c.phone||'').replace(/[^0-9]/g,'')}" target="_blank" style="opacity:${c.phone?1:.2};pointer-events:${c.phone?'auto':'none'}">💬</a>
+      </div>
+      <div class="amap-l4">
+        <input type="url" class="amap-in amap-li" placeholder="LinkedIn profile URL (paste)" value="${esc(c.linkedin)}" oninput="${u('linkedin')}">
+        <a class="amap-ic amap-li-ic" href="${esc(c.linkedin)}" target="_blank" title="Open profile" style="opacity:${c.linkedin?1:.2};pointer-events:${c.linkedin?'auto':'none'}">in</a>
+        ${_sel(CONNECT_STATUS, c.connectStatus, u('connectStatus'), 'amap-in amap-cstat')}
       </div>
     </div>`;
   }).join("") : `<div class="amap-empty">No one mapped yet. Add the buying committee — economic buyer, champion, IT, end user, procurement — then record how we reach each of them.</div>`;
@@ -2859,12 +2916,16 @@ function signInAddSelf(){
   doSignIn(id);
 }
 
+function drillToMarket(key){
+  if(key && key!=="undefined") state.country = key;
+  setView("pipeline");
+}
 function renderCeoReview(){
   const m = ceoMetrics();
   const pct = n => Math.round(n*100);
   const safePct = (a,b) => b ? Math.round(a/b*100) : 0;
 
-  const big = (v,l,sub,c) => `<div class="ceo-tile">
+  const big = (v,l,sub,c,clk) => `<div class="ceo-tile${clk?' ceo-tile-clk':''}"${clk?` onclick="setView('pipeline')" title="Open the pipeline"`:''}>
       <div class="ceo-tile-v" style="color:${c||'#10172a'};">${v}</div>
       <div class="ceo-tile-l">${l}</div>
       ${sub?`<div class="ceo-tile-s">${sub}</div>`:''}
@@ -2872,9 +2933,9 @@ function renderCeoReview(){
 
   document.getElementById("ceoHead").innerHTML =
     big(fmtMoney(m.arr), "ARR pipeline (open)", "vs "+fmtMoney(ARR_TARGET)+" target", "#2f43c9") +
-    big(pct(m.cover)+"%", "Target coverage", m.cover>=3?"healthy":(m.cover>=2?"thin":"below 2× — not enough"), m.cover>=3?"#1f9d5b":(m.cover>=2?"#e0930f":"#bf3147")) +
+    big(pct(m.cover)+"%", "Target coverage", m.cover>=3?"healthy":(m.cover>=2?"thin":"below 2× — not enough"), m.cover>=3?"#1f9d5b":(m.cover>=2?"#e0930f":"#bf3147"), true) +
     big(fmtMoney(m.weighted), "Weighted forecast", "probability-adjusted", "#6437c0") +
-    big(m.thisQn+" · "+fmtMoney(m.thisQval), "Closing this quarter", quarterLabel(getQuarterKey(realTodayStr())), "#147a45");
+    big(m.thisQn+" · "+fmtMoney(m.thisQval), "Closing this quarter", quarterLabel(getQuarterKey(realTodayStr())), "#147a45", true);
 
   // Execution health — the leading indicators
   const bar = (label, done, total, invert) => {
@@ -2901,7 +2962,7 @@ function renderCeoReview(){
   // Country table
   document.getElementById("ceoCountry").innerHTML =
     `<div class="ceo-ctry-hdr"><span>Market</span><span>Deals</span><span>ARR</span><span>Weighted</span><span>Buyer mapped</span></div>` +
-    m.byCountry.map(c=>`<div class="ceo-ctry-row">
+    m.byCountry.map(c=>`<div class="ceo-ctry-row ceo-clk" onclick="drillToMarket('${c.key}')" title="See ${esc(c.short)} deals in the pipeline">
       <span><i style="background:${c.color}"></i>${esc(c.short)}</span>
       <span>${c.n}</span>
       <span style="font-weight:800;">${fmtMoney(c.arr)}</span>
@@ -2936,6 +2997,63 @@ function renderCeoReview(){
 
 
 // ── Account map export / import ─────────────────────────────────────────────
+
+// LinkedIn invite queue. We NEVER auto-send (LinkedIn blocks automation, risks the
+// account). This assembles a hand-send checklist with a ready note to paste.
+function inviteQueue(){
+  const out = [];
+  state.deals.forEach(d=>{
+    getContacts(d).forEach(c=>{
+      const worth = c.connectStatus==="queued" || (c.connectStatus==="none" && c.linkedin);
+      if(worth && c.name){
+        out.push({deal:d.name, country:d.country, name:c.name, title:c.title,
+                  role:c.role, linkedin:c.linkedin, status:c.connectStatus,
+                  note:c.inviteNote || defaultInviteNote(c, d)});
+      }
+    });
+  });
+  out.sort((a,b)=> (a.status==="queued"?0:1) - (b.status==="queued"?0:1));
+  return out;
+}
+function defaultInviteNote(c, d){
+  const first = (c.name||"").trim().split(/\s+/)[0] || "there";
+  return `Hi ${first}, I lead SEA for HONO \u2014 we help ${d.country} teams like ${d.name} run HR for frontline/mobile staff through LINE & WhatsApp. Would value connecting.`;
+}
+function showInviteQueue(){
+  const q = inviteQueue();
+  const box = document.getElementById("inviteQueueBox");
+  const body = document.getElementById("inviteQueueBody");
+  if(!box || !body) return;
+  if(!q.length){
+    body.innerHTML = `<div class="iq-empty">No invites queued yet.<br><br>On any contact, paste their LinkedIn URL and set status to <b>\u25d4 Invite queued</b>. They'll appear here as a hand-send checklist \u2014 with a ready note to paste.<br><br><span style="color:#8a91a3;">We never auto-send: LinkedIn blocks automation and it can get your account restricted. This is a checklist you action yourself in a few minutes.</span></div>`;
+  } else {
+    body.innerHTML = q.map((x,i)=>`
+      <div class="iq-row">
+        <div class="iq-num">${i+1}</div>
+        <div class="iq-main">
+          <div class="iq-name">${esc(x.name)} <span class="iq-title">\u00b7 ${esc(x.title||x.role)}</span></div>
+          <div class="iq-deal">${esc(x.deal)} \u00b7 ${esc(x.country)} ${x.status==="queued"?'<span class="iq-flag">queued</span>':''}</div>
+          <div class="iq-note" id="iqnote-${i}">${esc(x.note)}</div>
+          <div class="iq-acts">
+            ${x.linkedin?`<a class="iq-open" href="${esc(x.linkedin)}" target="_blank">Open profile \u2197</a>`:'<span class="iq-noli">no URL \u2014 paste one on the contact</span>'}
+            <button class="iq-copy" onclick="copyInviteNote(${i})">Copy note</button>
+          </div>
+        </div>
+      </div>`).join("");
+  }
+  box.style.display = "flex";
+}
+function hideInviteQueue(){ const b=document.getElementById("inviteQueueBox"); if(b) b.style.display="none"; }
+function copyInviteNote(i){
+  const el = document.getElementById("iqnote-"+i);
+  if(!el) return;
+  navigator.clipboard.writeText(el.textContent).then(()=>{
+    const btn = el.parentElement.querySelector(".iq-copy");
+    if(btn){ const t=btn.textContent; btn.textContent="Copied \u2713"; setTimeout(()=>btn.textContent=t,1200); }
+  });
+}
+
+
 function exportAccountMaps(){
   const withC = state.deals.filter(d=>(d.contacts||[]).length>0);
   const dump = {
@@ -4160,7 +4278,8 @@ function addContact(dealId){
   if(!d) return;
   if(!d.contacts) d.contacts=[];
   d.contacts.push({id:"c"+Date.now(), name:"", title:"", email:"", phone:"",
-                   role:"Unknown", strength:"None", pathType:"none", pathOwner:"", pathNote:""});
+                   role:"Unknown", strength:"None", pathType:"none", pathOwner:"", pathNote:"",
+                   linkedin:"", connectStatus:"none", inviteNote:""});
   d.lastUpdated = TODAY.toISOString().slice(0,10);
   persist();
   renderPipeline();
@@ -5519,6 +5638,19 @@ async function _doExportBizPPT(){
 </script>
 
 <!-- ── Team Manager Modal ─────────────────────────────────────────────────── -->
+<div id="inviteQueueBox" style="display:none;position:fixed;inset:0;background:rgba(16,23,42,.55);z-index:850;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)hideInviteQueue()">
+  <div class="iq-panel">
+    <div class="iq-head">
+      <div>
+        <div class="iq-title-main">🔗 LinkedIn invites to send</div>
+        <div class="iq-sub">Send these by hand in LinkedIn — a few minutes, no automation, no account risk.</div>
+      </div>
+      <button class="iq-x" onclick="hideInviteQueue()">×</button>
+    </div>
+    <div id="inviteQueueBody" class="iq-body"></div>
+  </div>
+</div>
+
 <div id="signInOverlay" style="display:none;position:fixed;inset:0;background:linear-gradient(155deg,#0f1b3d,#233a86);z-index:900;align-items:center;justify-content:center;padding:20px;">
   <div class="si-box">
     <div class="si-logo">H</div>
