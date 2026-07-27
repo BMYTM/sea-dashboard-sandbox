@@ -780,6 +780,47 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
 .qf-sub{font-size:11.5px;color:#8a91a3;font-weight:600;margin-left:auto;white-space:nowrap;flex-shrink:0;}
 .qf-empty{padding:20px;text-align:center;color:#9aa2b2;font-size:13px;}
 .qf-hint{padding:9px 20px;font-size:11px;color:#aeb4c2;font-weight:600;background:#fafbfd;border-top:1px solid #eef1f6;}
+
+/* focus banner */
+.focus-wrap{background:linear-gradient(135deg,#f4f6fd,#eef2fc);border:1px solid #e2e8f8;border-radius:14px;padding:16px 18px;margin-bottom:16px;}
+.focus-title{font-size:13px;font-weight:800;color:#28304a;margin-bottom:12px;}
+.focus-sub{font-weight:600;color:#8a91a3;font-size:11.5px;}
+.focus-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;}
+.focus-card{background:#fff;border:1px solid #e7eaf3;border-radius:11px;padding:12px 13px;cursor:pointer;transition:.14s;}
+.focus-card:hover{border-color:#2f43c9;box-shadow:0 4px 14px rgba(47,67,201,.1);}
+.focus-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px;}
+.focus-name{font-size:13px;font-weight:700;color:#1c2438;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.focus-amt{font-size:12px;font-weight:800;color:#2f43c9;flex-shrink:0;}
+.focus-why{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;}
+.focus-tag{font-size:10.5px;font-weight:700;color:#bf3147;background:#fdecee;padding:2px 8px;border-radius:20px;}
+.focus-actions{display:flex;gap:6px;}
+.focus-btn{flex:1;font-size:11.5px;font-weight:700;padding:6px 8px;border-radius:7px;border:1px solid #dfe4ec;background:#fff;color:#3a4256;cursor:pointer;font-family:inherit;transition:.12s;}
+.focus-btn:hover{border-color:#2f43c9;color:#2f43c9;}
+.focus-btn-ai{background:#2f43c9;color:#fff;border-color:#2f43c9;}
+.focus-btn-ai:hover{background:#2536a8;color:#fff;}
+.qa-ai{border-color:#c9a3e8!important;color:#7a3fb0!important;}
+.qa-ai:hover{background:#f6eefc!important;border-color:#8254d8!important;}
+/* draft modal */
+.draft-panel{background:#fff;border-radius:16px;width:100%;max-width:540px;max-height:88vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.4);}
+.draft-header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #eef1f6;font-size:15px;font-weight:800;color:#10172a;}
+.draft-x{background:none;border:none;font-size:24px;color:#aeb4c2;cursor:pointer;line-height:1;}
+.draft-body{padding:18px 22px 22px;}
+.draft-loading{text-align:center;padding:30px 10px;color:#5a6274;font-size:14px;}
+.draft-sub{font-size:12px;color:#9aa2b2;margin-top:8px;}
+.draft-spin{width:30px;height:30px;border:3px solid #e7eaf3;border-top-color:#2f43c9;border-radius:50%;margin:0 auto 16px;animation:draftspin .8s linear infinite;}
+@keyframes draftspin{to{transform:rotate(360deg);}}
+.draft-block{margin-bottom:16px;position:relative;}
+.draft-lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#8a91a3;margin-bottom:6px;}
+.draft-subj{font-size:12.5px;font-weight:700;color:#28304a;margin-bottom:6px;}
+.draft-text{font-size:13px;line-height:1.6;color:#28304a;background:#f7f9fc;border:1px solid #eef1f6;border-radius:9px;padding:12px 14px;white-space:pre-wrap;}
+.draft-copy{margin-top:7px;font-size:11.5px;font-weight:700;color:#2f43c9;background:#fff;border:1px solid #cdd5ee;border-radius:7px;padding:5px 12px;cursor:pointer;font-family:inherit;}
+.draft-copy:hover{background:#f4f6fd;}
+.draft-note{font-size:11px;color:#9aa2b2;font-weight:600;margin-top:8px;line-height:1.5;}
+.draft-err{color:#bf3147;font-size:13px;line-height:1.6;padding:10px 0;}
+
+.amap-more{background:#f0f2f7;border:1px solid #e2e6ee;color:#7b8395;border-radius:6px;font-size:10.5px;font-weight:700;padding:0 8px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:.12s;}
+.amap-more:hover{background:#e7ecfd;color:#2f43c9;border-color:#c9d3f2;}
+.amap-detail{margin-top:6px;padding-top:8px;border-top:1px dashed #e7eaf1;}
 </style>
 </head>
 <body>
@@ -846,6 +887,7 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
 <main>
   <!-- PIPELINE VIEW -->
   <div id="viewCeo" style="display:none;animation:seaIn 0.4s ease;">
+    <div id="focusBannerCeo"></div>
     <div class="card" style="margin-bottom:14px;">
       <div class="card-head"><div>
         <div class="card-title">CEO Review — SEA</div>
@@ -1001,6 +1043,7 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
       <div class="tbl-head" style="grid-template-columns:minmax(200px,1.7fr) 110px 156px 96px 92px 124px minmax(180px,1.5fr) 96px;">
         <div class="th-sort" onclick="onSort('name')" title="Sort by name">Deal<span class="th-arr" data-k="name"></span></div><div>Country</div><div>Stage</div><div class="th-sort" style="text-align:right;justify-content:flex-end;" onclick="onSort('amount')" title="Sort by amount">Amount<span class="th-arr" data-k="amount"></span></div><div class="th-sort" onclick="onSort('close')" title="Sort by close date">Close<span class="th-arr" data-k="close"></span></div><div class="th-sort" onclick="onSort('prob')" title="Sort by win %">Win %<span class="th-arr" data-k="prob"></span></div><div>Latest weekly remark</div><div class="th-sort" style="text-align:center;justify-content:center;" onclick="onSort('updated')" title="Sort by update state">State<span class="th-arr" data-k="updated"></span></div>
       </div>
+      <div id="focusBannerPipe"></div>
       <div id="needsAttentionStrip"></div>
       <div id="dealTableBody"></div>
       <div id="dealTableFooter"></div>
@@ -1998,7 +2041,7 @@ function renderChat(){
   const el = document.getElementById("chatMessages");
   if(!el) return;
   if(!state.chatLog.length){
-    state.chatLog.push({role:"bot", text:"Hi! I'm a local pipeline assistant — ask me about deals, meetings or recent activity. Nothing here calls an external AI, it's all computed from this week's data."});
+    state.chatLog.push({role:"bot", text:"Hi! Ask me anything about your pipeline. Common questions (top deals, deals at risk, win rate, pipeline by country) answer instantly from your data. Open-ended questions — like \"which deals should I prioritise this week and why\" — I'll reason through live using Claude."});
   }
   el.innerHTML = state.chatLog.map(m=>{
     const isUser = m.role==="user";
@@ -2023,11 +2066,51 @@ function sendChat(){
   inp.value="";
   askChat(text);
 }
-function askChat(text){
+async function askChat(text){
   state.chatLog.push({role:"user", text});
   const answer = answerAssistant(text);
+  if(answer && answer._fallback){
+    // local rules didn't match — ask Claude, with the pipeline as context
+    state.chatLog.push({role:"bot", text:"Thinking…", _pending:true});
+    renderChat();
+    const reply = await askClaude(text);
+    // replace the pending bubble
+    const idx = state.chatLog.map(m=>m._pending).lastIndexOf(true);
+    if(idx>=0) state.chatLog[idx] = {role:"bot", text:reply};
+    renderChat();
+    return;
+  }
   state.chatLog.push({role:"bot", text: answer.text||"", html: answer.html});
   renderChat();
+}
+
+async function askClaude(question){
+  // compact snapshot — only what's needed to answer, keeps the prompt light
+  const open = state.deals.filter(isOpen);
+  const snap = open.map(d=>({
+    name:d.name, country:d.country, stage:stageOf(d.stage).label,
+    amount:d.amount, winPct:Math.round((d.prob||0)*100), close:d.close,
+    remark:(d.remarks||"").slice(0,120),
+    buyer:(getContacts(d).find(c=>c.role==="Economic Buyer")||{}).name||"",
+    risks:dealRisks(d).join(", ")
+  }));
+  const prompt =
+`You are the sales assistant inside HONO's SEA pipeline dashboard. Answer the user's question using ONLY the deal data below. Be concise and specific — name deals and numbers. If the data can't answer it, say so briefly. Don't invent deals or contacts.
+
+USER QUESTION: ${question}
+
+OPEN DEALS (JSON): ${JSON.stringify(snap)}`;
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:1000, messages:[{role:"user", content:prompt}] })
+    });
+    const data = await res.json();
+    return (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("").trim()
+      || "I couldn't get an answer that time — try rephrasing.";
+  } catch(e){
+    return "I can answer instantly from your data for common questions (try \"deals at risk\" or \"top 5 deals\"). For open-ended questions I use Claude live, which needs an internet connection — that didn't connect just now.";
+  }
 }
 function answerAssistant(qRaw){
   const q = String(qRaw||"").toLowerCase().trim();
@@ -2268,7 +2351,7 @@ function answerAssistant(qRaw){
     ])};
   }
 
-  return {text:"I'm not sure how to answer that yet. Try: \"which deals need an update\", \"top 5 deals\", \"win rate\", \"deals at risk\", \"deals over $100k\", \"which country has the most pipeline\", \"business summary\", \"meetings this week\", or \"recent activity\"."};
+  return {_fallback:true};
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -2718,6 +2801,13 @@ function allPathGaps(){
   return out;
 }
 
+function toggleContactDetail(cid){
+  const el=document.getElementById("cdetail-"+cid), btn=document.getElementById("cmore-"+cid);
+  if(!el) return;
+  const open = el.style.display!=="none";
+  el.style.display = open ? "none" : "block";
+  if(btn) btn.innerHTML = open ? "details ▾" : "details ▴";
+}
 function _sel(opts, cur, onchange, cls){
   return `<select class="${cls}" onchange="${onchange}">` +
     opts.map(o=>{const v=typeof o==="string"?o:o.key, l=typeof o==="string"?o:o.label;
@@ -2752,23 +2842,26 @@ function renderAccountMap(d){
         <input type="text" class="amap-in" placeholder="Title" value="${esc(c.title)}" oninput="${u('title')}">
         ${_sel(COMMITTEE_ROLES, c.role, u('role'), 'amap-in amap-role')}
         ${_sel(STRENGTHS, c.strength, u('strength'), 'amap-in amap-str')}
+        <button class="amap-more" onclick="toggleContactDetail('${c.id}')" id="cmore-${c.id}" title="Show path, contact details, LinkedIn">details ▾</button>
         <button class="amap-del" onclick="removeContact('${d.id}','${c.id}')" title="Remove">×</button>
       </div>
-      <div class="amap-l2">
-        ${_sel(PATH_TYPES, c.pathType, u('pathType'), 'amap-in amap-path')}
-        ${_userSel(c.pathOwner, u('pathOwner'), 'amap-in amap-owner')}
-        <input type="text" class="amap-in" placeholder="Their win / how we get to them" value="${esc(c.pathNote)}" oninput="${u('pathNote')}">
-      </div>
-      <div class="amap-l3">
-        <input type="email" class="amap-in" placeholder="Email" value="${esc(c.email)}" oninput="${u('email')}">
-        <a class="amap-ic" href="mailto:${esc(c.email)}" style="opacity:${c.email?1:.2};pointer-events:${c.email?'auto':'none'}">✉️</a>
-        <input type="tel" class="amap-in" placeholder="Phone" value="${esc(c.phone)}" oninput="${u('phone')}">
-        <a class="amap-ic" href="https://wa.me/${(c.phone||'').replace(/[^0-9]/g,'')}" target="_blank" style="opacity:${c.phone?1:.2};pointer-events:${c.phone?'auto':'none'}">💬</a>
-      </div>
-      <div class="amap-l4">
-        <input type="url" class="amap-in amap-li" placeholder="LinkedIn profile URL (paste)" value="${esc(c.linkedin)}" oninput="${u('linkedin')}">
-        <a class="amap-ic amap-li-ic" href="${esc(c.linkedin)}" target="_blank" title="Open profile" style="opacity:${c.linkedin?1:.2};pointer-events:${c.linkedin?'auto':'none'}">in</a>
-        ${_sel(CONNECT_STATUS, c.connectStatus, u('connectStatus'), 'amap-in amap-cstat')}
+      <div class="amap-detail" id="cdetail-${c.id}" style="display:none;">
+        <div class="amap-l2">
+          ${_sel(PATH_TYPES, c.pathType, u('pathType'), 'amap-in amap-path')}
+          ${_userSel(c.pathOwner, u('pathOwner'), 'amap-in amap-owner')}
+          <input type="text" class="amap-in" placeholder="Their win / how we get to them" value="${esc(c.pathNote)}" oninput="${u('pathNote')}">
+        </div>
+        <div class="amap-l3">
+          <input type="email" class="amap-in" placeholder="Email" value="${esc(c.email)}" oninput="${u('email')}">
+          <a class="amap-ic" href="mailto:${esc(c.email)}" style="opacity:${c.email?1:.2};pointer-events:${c.email?'auto':'none'}">✉️</a>
+          <input type="tel" class="amap-in" placeholder="Phone" value="${esc(c.phone)}" oninput="${u('phone')}">
+          <a class="amap-ic" href="https://wa.me/${(c.phone||'').replace(/[^0-9]/g,'')}" target="_blank" style="opacity:${c.phone?1:.2};pointer-events:${c.phone?'auto':'none'}">💬</a>
+        </div>
+        <div class="amap-l4">
+          <input type="url" class="amap-in amap-li" placeholder="LinkedIn profile URL (paste)" value="${esc(c.linkedin)}" oninput="${u('linkedin')}">
+          <a class="amap-ic amap-li-ic" href="${esc(c.linkedin)}" target="_blank" title="Open profile" style="opacity:${c.linkedin?1:.2};pointer-events:${c.linkedin?'auto':'none'}">in</a>
+          ${_sel(CONNECT_STATUS, c.connectStatus, u('connectStatus'), 'amap-in amap-cstat')}
+        </div>
       </div>
     </div>`;
   }).join("") : `<div class="amap-empty">No one mapped yet. Add the buying committee — economic buyer, champion, IT, end user, procurement — then record how we reach each of them.</div>`;
@@ -2815,6 +2908,151 @@ function renderAccountMap(d){
 //  CEO REVIEW — one screen: where we stand, whether we believe it, what's at risk
 // ══════════════════════════════════════════════════════════════════════════════
 const ARR_TARGET = 3000000;   // FY ARR target (USD) — edit to match the plan
+
+
+
+// ── AI-drafted follow-up: turns the detail you already captured into output ──
+async function draftFollowup(dealId){
+  const d = state.deals.find(x=>x.id===dealId);
+  if(!d) return;
+  showDraftModal(d, null, true); // loading
+  const contacts = getContacts(d);
+  const buyer = contacts.find(c=>c.role==="Economic Buyer") || contacts[0];
+  const risks = dealRisks(d).join(", ");
+  const ctx = {
+    deal:d.name, country:d.country, stage:stageOf(d.stage).label,
+    amount:fmtMoney(d.amount), lastRemark:d.remarks||"", risks,
+    buyer: buyer?`${buyer.name||"(unnamed)"} — ${buyer.title||buyer.role}`:"not identified",
+    contacts: contacts.map(c=>`${c.name||"(unnamed)"} (${c.role})`).join("; ")
+  };
+  const prompt =
+`You are helping a B2B SaaS seller (HONO, an AI-native HR/HCM platform for Southeast Asia) write a short, human follow-up to re-engage a stalled deal. Be warm, specific, and brief — no corporate filler, no "I hope this email finds you well".
+
+Deal context:
+- Account: ${ctx.deal} (${ctx.country})
+- Stage: ${ctx.stage}, value ${ctx.amount}
+- Key buyer: ${ctx.buyer}
+- Committee: ${ctx.contacts}
+- Current issues: ${ctx.risks}
+- Last note from the rep: "${ctx.lastRemark}"
+
+Write TWO options, each under 90 words:
+1. A LinkedIn/WhatsApp message (very short, casual-professional)
+2. An email (subject line + body)
+
+Return as JSON only, no markdown: {"linkedin":"...","emailSubject":"...","emailBody":"..."}`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:1000,
+        messages:[{role:"user", content:prompt}] })
+    });
+    const data = await res.json();
+    const txt = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("").replace(/```json|```/g,"").trim();
+    let parsed; try{ parsed=JSON.parse(txt); }catch(e){ parsed={linkedin:txt, emailSubject:"", emailBody:""}; }
+    showDraftModal(d, parsed, false);
+    logActivity("AI follow-up drafted", d.name);
+  } catch(e){
+    showDraftModal(d, {error:"Couldn't reach the AI service. This needs an internet connection and runs live via Claude. You can still copy the deal context and draft manually."}, false);
+  }
+}
+
+function showDraftModal(d, content, loading){
+  let m = document.getElementById("draftModal");
+  if(!m){
+    m=document.createElement("div"); m.id="draftModal";
+    m.style.cssText="position:fixed;inset:0;background:rgba(16,23,42,.55);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;";
+    m.onclick=e=>{ if(e.target===m) m.style.display="none"; };
+    document.body.appendChild(m);
+  }
+  m.style.display="flex";
+  let body;
+  if(loading){
+    body = `<div class="draft-loading"><div class="draft-spin"></div>Drafting a follow-up for <b>${esc(d.name)}</b>…<div class="draft-sub">Using the buyer, committee and notes you already captured.</div></div>`;
+  } else if(content && content.error){
+    body = `<div class="draft-err">${esc(content.error)}</div>`;
+  } else {
+    body = `
+      <div class="draft-block">
+        <div class="draft-lbl">LinkedIn / WhatsApp</div>
+        <div class="draft-text" id="draftLi">${esc(content.linkedin||"")}</div>
+        <button class="draft-copy" onclick="copyText('draftLi',this)">Copy</button>
+      </div>
+      ${content.emailBody?`<div class="draft-block">
+        <div class="draft-lbl">Email</div>
+        <div class="draft-subj">Subject: ${esc(content.emailSubject||"")}</div>
+        <div class="draft-text" id="draftEm">${esc(content.emailBody||"")}</div>
+        <button class="draft-copy" onclick="copyText('draftEm',this)">Copy</button>
+      </div>`:""}
+      <div class="draft-note">AI-drafted from your deal data. Read it before sending — it's a starting point, not a send-button.</div>`;
+  }
+  m.innerHTML = `<div class="draft-panel">
+    <div class="draft-header"><span>✨ Follow-up draft</span><button class="draft-x" onclick="document.getElementById('draftModal').style.display='none'">×</button></div>
+    <div class="draft-body">${body}</div>
+  </div>`;
+}
+function copyText(id, btn){
+  const el=document.getElementById(id); if(!el) return;
+  navigator.clipboard.writeText(el.textContent).then(()=>{ const t=btn.textContent; btn.textContent="Copied ✓"; setTimeout(()=>btn.textContent=t,1200); });
+}
+
+
+// ── Focus engine: "what needs me today", computed from data you already have ──
+function focusItems(){
+  const mine = state.deals.filter(d=>isOpen(d) && d.stage!=="onhold");
+  const items = [];
+  mine.forEach(d=>{
+    const risks = dealRisks(d);
+    const days = getDaysSinceEngagement(d);
+    let score = 0, why = [];
+    // weight by money and by how broken it is
+    const money = (d.amount||0);
+    if(risks.includes("No warm path to buyer")){ score+=5; why.push("no warm path to buyer"); }
+    if(risks.some(r=>/Stalled/.test(r))){ const dd=days||0; score += Math.min(6, dd/10); why.push("stalled "+dd+"d"); }
+    if(risks.includes("No next step")){ score+=4; why.push("no next step"); }
+    if(risks.includes("Single-threaded")){ score+=2; why.push("single-threaded"); }
+    if(risks.includes("Close date passed")){ score+=4; why.push("close date passed"); }
+    if(risks.includes("Nobody mapped")){ score+=3; why.push("nobody mapped"); }
+    if(!d.updated){ score+=1.5; why.push("not updated this week"); }
+    // money multiplier (bigger deals rise)
+    score = score * (1 + Math.min(1.5, money/300000));
+    if(why.length) items.push({deal:d, score, why});
+  });
+  items.sort((a,b)=>b.score-a.score);
+  return items;
+}
+
+function renderFocusBanner(hostId){
+  const host = document.getElementById(hostId);
+  if(!host) return;
+  const items = focusItems().slice(0,3);
+  if(!items.length){ host.innerHTML=""; return; }
+  const cards = items.map(it=>{
+    const d = it.deal;
+    return `<div class="focus-card" onclick="gotoDeal('${d.id}')">
+      <div class="focus-head">
+        <span class="focus-name">${esc(d.name)}</span>
+        <span class="focus-amt">${fmtMoney(d.amount)}</span>
+      </div>
+      <div class="focus-why">${it.why.slice(0,3).map(w=>`<span class="focus-tag">${esc(w)}</span>`).join("")}</div>
+      <div class="focus-actions">
+        <button class="focus-btn" onclick="event.stopPropagation();gotoDeal('${d.id}')">Open</button>
+        <button class="focus-btn focus-btn-ai" onclick="event.stopPropagation();draftFollowup('${d.id}')">✨ Draft follow-up</button>
+      </div>
+    </div>`;
+  }).join("");
+  host.innerHTML = `<div class="focus-wrap">
+    <div class="focus-title">🎯 What needs you today <span class="focus-sub">— highest-leverage deals right now, from your own data</span></div>
+    <div class="focus-grid">${cards}</div>
+  </div>`;
+}
+
+function gotoDeal(id){
+  state.expandedId=id; setView("pipeline");
+  setTimeout(()=>{ const el=document.querySelector(`[onclick="toggleExpand('${id}')"]`); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); },80);
+}
+
 
 function dealRisks(d){
   const r = [];
@@ -2947,6 +3185,7 @@ function drillToMarket(key){
   setView("pipeline");
 }
 function renderCeoReview(){
+  setTimeout(()=>renderFocusBanner("focusBannerCeo"),0);
   const m = ceoMetrics();
   const pct = n => Math.round(n*100);
   const safePct = (a,b) => b ? Math.round(a/b*100) : 0;
@@ -3354,6 +3593,7 @@ document.addEventListener("keydown",e=>{
 });
 
 function renderPipeline(){
+  renderFocusBanner("focusBannerPipe");
   // ── Render team strip first ──────────────────────────────────────────────
   _renderTeamStrip();
   // Update SDR queue button state
@@ -3907,6 +4147,7 @@ function renderDealRow(d){
         <div class="row-actions">
           <button class="btn-mark" style="background:${markBg};color:${markFg};border:1px solid ${markBd};" onclick="markUpdated('${d.id}')">${markLabel}</button>
           <button class="qa-btn" onclick="event.stopPropagation();gotoAccountMap('${d.id}')" title="Open this account's map">🗺️ Account map</button>
+          <button class="qa-btn qa-ai" onclick="event.stopPropagation();draftFollowup('${d.id}')" title="AI-draft a follow-up from this deal's data">✨ Draft follow-up</button>
           ${!["won","lost"].includes(d.stage)?`<button class="qa-btn qa-win" onclick="event.stopPropagation();quickSetStage('${d.id}','won')" title="Mark this deal won">✓ Won</button>
           <button class="qa-btn qa-lost" onclick="event.stopPropagation();quickSetStage('${d.id}','lost')" title="Mark this deal lost">✕ Lost</button>
           <button class="qa-btn qa-hold" onclick="event.stopPropagation();quickSetStage('${d.id}','onhold')" title="Put this deal on hold">⏸ Hold</button>`:`<button class="qa-btn" onclick="event.stopPropagation();quickSetStage('${d.id}','demo')" title="Reopen this deal">↺ Reopen</button>`}
