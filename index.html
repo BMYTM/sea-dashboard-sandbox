@@ -821,6 +821,11 @@ main{max-width:1360px;margin:0 auto;padding:24px 28px 64px;}
 .amap-more{background:#f0f2f7;border:1px solid #e2e6ee;color:#7b8395;border-radius:6px;font-size:10.5px;font-weight:700;padding:0 8px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:.12s;}
 .amap-more:hover{background:#e7ecfd;color:#2f43c9;border-color:#c9d3f2;}
 .amap-detail{margin-top:6px;padding-top:8px;border-top:1px dashed #e7eaf1;}
+
+.draft-intro{font-size:12.5px;line-height:1.55;color:#3a4256;margin-bottom:12px;}
+.draft-prompt{max-height:260px;overflow-y:auto;font-size:12px;line-height:1.55;font-family:ui-monospace,Menlo,monospace;}
+.draft-copy-big{margin-top:10px;background:#2f43c9;color:#fff;border-color:#2f43c9;padding:9px 16px;font-size:13px;}
+.draft-copy-big:hover{background:#2536a8;}
 </style>
 </head>
 <body>
@@ -2070,13 +2075,7 @@ async function askChat(text){
   state.chatLog.push({role:"user", text});
   const answer = answerAssistant(text);
   if(answer && answer._fallback){
-    // local rules didn't match — ask Claude, with the pipeline as context
-    state.chatLog.push({role:"bot", text:"Thinking…", _pending:true});
-    renderChat();
-    const reply = await askClaude(text);
-    // replace the pending bubble
-    const idx = state.chatLog.map(m=>m._pending).lastIndexOf(true);
-    if(idx>=0) state.chatLog[idx] = {role:"bot", text:reply};
+    state.chatLog.push({role:"bot", text:"I answer common pipeline questions instantly here (try \"deals at risk\", \"top 5 deals\", \"pipeline by country\", \"business summary\"). For open-ended analysis — prioritisation, drafting, \"what should I do about X\" — use Claude Cowork with your exported data: click ⭳ Full backup on the Account Map tab, drop the file into Cowork, and ask there."});
     renderChat();
     return;
   }
@@ -2912,50 +2911,34 @@ const ARR_TARGET = 3000000;   // FY ARR target (USD) — edit to match the plan
 
 
 // ── AI-drafted follow-up: turns the detail you already captured into output ──
-async function draftFollowup(dealId){
-  const d = state.deals.find(x=>x.id===dealId);
-  if(!d) return;
-  showDraftModal(d, null, true); // loading
+function buildCoworkPrompt(d){
   const contacts = getContacts(d);
   const buyer = contacts.find(c=>c.role==="Economic Buyer") || contacts[0];
-  const risks = dealRisks(d).join(", ");
-  const ctx = {
-    deal:d.name, country:d.country, stage:stageOf(d.stage).label,
-    amount:fmtMoney(d.amount), lastRemark:d.remarks||"", risks,
-    buyer: buyer?`${buyer.name||"(unnamed)"} — ${buyer.title||buyer.role}`:"not identified",
-    contacts: contacts.map(c=>`${c.name||"(unnamed)"} (${c.role})`).join("; ")
-  };
-  const prompt =
-`You are helping a B2B SaaS seller (HONO, an AI-native HR/HCM platform for Southeast Asia) write a short, human follow-up to re-engage a stalled deal. Be warm, specific, and brief — no corporate filler, no "I hope this email finds you well".
+  const committee = contacts.map(c=>{
+    const path = pathDef(c.pathType).warm ? ("warm via "+(getUserById(c.pathOwner)||{}).name||"team") : "cold";
+    return `  - ${c.name||"(unnamed)"} — ${c.title||c.role} [${c.role}] · ${c.strength} · ${path}${c.pathNote?" · "+c.pathNote:""}`;
+  }).join("\n");
+  const risks = dealRisks(d).join(", ") || "none flagged";
+  return `Act as my SEA sales co-pilot for HONO (AI-native HR/HCM platform; our edge is a headless/Zero-UI experience over LINE & WhatsApp for frontline & mobile workforces). Help me re-engage this deal.
 
-Deal context:
-- Account: ${ctx.deal} (${ctx.country})
-- Stage: ${ctx.stage}, value ${ctx.amount}
-- Key buyer: ${ctx.buyer}
-- Committee: ${ctx.contacts}
-- Current issues: ${ctx.risks}
-- Last note from the rep: "${ctx.lastRemark}"
+ACCOUNT: ${d.name} (${countryOf(d.country).short})
+STAGE: ${stageOf(d.stage).label} · value ${fmtMoney(d.amount)} · win ${Math.round((d.prob||0)*100)}%
+LAST REMARK: ${d.remarks||"(none)"}
+OPEN RISKS: ${risks}
+BUYING COMMITTEE:
+${committee||"  (none mapped yet)"}
 
-Write TWO options, each under 90 words:
-1. A LinkedIn/WhatsApp message (very short, casual-professional)
-2. An email (subject line + body)
+Please give me:
+1. A short LinkedIn/WhatsApp message to ${buyer&&buyer.name?buyer.name:"the buyer"} (under 60 words, warm, specific, no filler)
+2. An email (subject + body, under 120 words)
+3. One sentence: the single most important next move on this deal.`;
+}
 
-Return as JSON only, no markdown: {"linkedin":"...","emailSubject":"...","emailBody":"..."}`;
-
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:1000,
-        messages:[{role:"user", content:prompt}] })
-    });
-    const data = await res.json();
-    const txt = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("").replace(/```json|```/g,"").trim();
-    let parsed; try{ parsed=JSON.parse(txt); }catch(e){ parsed={linkedin:txt, emailSubject:"", emailBody:""}; }
-    showDraftModal(d, parsed, false);
-    logActivity("AI follow-up drafted", d.name);
-  } catch(e){
-    showDraftModal(d, {error:"Couldn't reach the AI service. This needs an internet connection and runs live via Claude. You can still copy the deal context and draft manually."}, false);
-  }
+function draftFollowup(dealId){
+  const d = state.deals.find(x=>x.id===dealId);
+  if(!d) return;
+  const prompt = buildCoworkPrompt(d);
+  showDraftModal(d, {prompt}, false);
 }
 
 function showDraftModal(d, content, loading){
@@ -2967,28 +2950,15 @@ function showDraftModal(d, content, loading){
     document.body.appendChild(m);
   }
   m.style.display="flex";
-  let body;
-  if(loading){
-    body = `<div class="draft-loading"><div class="draft-spin"></div>Drafting a follow-up for <b>${esc(d.name)}</b>…<div class="draft-sub">Using the buyer, committee and notes you already captured.</div></div>`;
-  } else if(content && content.error){
-    body = `<div class="draft-err">${esc(content.error)}</div>`;
-  } else {
-    body = `
+  const body = `
+      <div class="draft-intro">Copy this and paste it into <b>Claude Cowork</b> (or any Claude chat) to get your drafts. It carries everything Claude needs about this deal.</div>
       <div class="draft-block">
-        <div class="draft-lbl">LinkedIn / WhatsApp</div>
-        <div class="draft-text" id="draftLi">${esc(content.linkedin||"")}</div>
-        <button class="draft-copy" onclick="copyText('draftLi',this)">Copy</button>
+        <div class="draft-text draft-prompt" id="draftPrompt">${esc((content&&content.prompt)||"")}</div>
+        <button class="draft-copy draft-copy-big" onclick="copyText('draftPrompt',this)">📋 Copy for Cowork</button>
       </div>
-      ${content.emailBody?`<div class="draft-block">
-        <div class="draft-lbl">Email</div>
-        <div class="draft-subj">Subject: ${esc(content.emailSubject||"")}</div>
-        <div class="draft-text" id="draftEm">${esc(content.emailBody||"")}</div>
-        <button class="draft-copy" onclick="copyText('draftEm',this)">Copy</button>
-      </div>`:""}
-      <div class="draft-note">AI-drafted from your deal data. Read it before sending — it's a starting point, not a send-button.</div>`;
-  }
+      <div class="draft-note">Why copy instead of instant? This board lives on a shared team URL that can't run the AI directly. Cowork is your AI workspace — paste there and it drafts, using this context. One-time setup gets you a saved shortcut.</div>`;
   m.innerHTML = `<div class="draft-panel">
-    <div class="draft-header"><span>✨ Follow-up draft</span><button class="draft-x" onclick="document.getElementById('draftModal').style.display='none'">×</button></div>
+    <div class="draft-header"><span>✨ Draft with Cowork</span><button class="draft-x" onclick="document.getElementById('draftModal').style.display='none'">×</button></div>
     <div class="draft-body">${body}</div>
   </div>`;
 }
@@ -3038,7 +3008,7 @@ function renderFocusBanner(hostId){
       <div class="focus-why">${it.why.slice(0,3).map(w=>`<span class="focus-tag">${esc(w)}</span>`).join("")}</div>
       <div class="focus-actions">
         <button class="focus-btn" onclick="event.stopPropagation();gotoDeal('${d.id}')">Open</button>
-        <button class="focus-btn focus-btn-ai" onclick="event.stopPropagation();draftFollowup('${d.id}')">✨ Draft follow-up</button>
+        <button class="focus-btn focus-btn-ai" onclick="event.stopPropagation();draftFollowup('${d.id}')">✨ Draft (Cowork)</button>
       </div>
     </div>`;
   }).join("");
@@ -4147,7 +4117,7 @@ function renderDealRow(d){
         <div class="row-actions">
           <button class="btn-mark" style="background:${markBg};color:${markFg};border:1px solid ${markBd};" onclick="markUpdated('${d.id}')">${markLabel}</button>
           <button class="qa-btn" onclick="event.stopPropagation();gotoAccountMap('${d.id}')" title="Open this account's map">🗺️ Account map</button>
-          <button class="qa-btn qa-ai" onclick="event.stopPropagation();draftFollowup('${d.id}')" title="AI-draft a follow-up from this deal's data">✨ Draft follow-up</button>
+          <button class="qa-btn qa-ai" onclick="event.stopPropagation();draftFollowup('${d.id}')" title="Copy this deal's context to draft a follow-up in Cowork">✨ Draft (Cowork)</button>
           ${!["won","lost"].includes(d.stage)?`<button class="qa-btn qa-win" onclick="event.stopPropagation();quickSetStage('${d.id}','won')" title="Mark this deal won">✓ Won</button>
           <button class="qa-btn qa-lost" onclick="event.stopPropagation();quickSetStage('${d.id}','lost')" title="Mark this deal lost">✕ Lost</button>
           <button class="qa-btn qa-hold" onclick="event.stopPropagation();quickSetStage('${d.id}','onhold')" title="Put this deal on hold">⏸ Hold</button>`:`<button class="qa-btn" onclick="event.stopPropagation();quickSetStage('${d.id}','demo')" title="Reopen this deal">↺ Reopen</button>`}
